@@ -123,10 +123,13 @@ public class BtrfsFile {
         // read children and keys if necessary
         for (int i = 0; i < node.size; ++i) {
             // do something, I have yet to figure out what
-            // red children up to some point
+            // read children up to some point
+            if (node.children[i] != null) {
+                // view = view.plus(read(node.children[i], ..., ...));
+            }
             // then key
         }
-        // reed final child maybe
+        // read final child maybe
 
         // once everything has been added, return the view
         return view;

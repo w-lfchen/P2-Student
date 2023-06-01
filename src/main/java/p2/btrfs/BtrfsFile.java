@@ -42,9 +42,9 @@ public class BtrfsFile {
     /**
      * Creates a new {@link BtrfsFile} instance.
      *
-     * @param name the name of the file.
+     * @param name    the name of the file.
      * @param storage the storage in which the file is stored.
-     * @param degree the degree of the B-tree.
+     * @param degree  the degree of the B-tree.
      */
     public BtrfsFile(String name, Storage storage, int degree) {
         this.name = name;
@@ -98,7 +98,7 @@ public class BtrfsFile {
     /**
      * Reads the given amount of data from the file starting at the given start position.
      *
-     * @param start the start position.
+     * @param start  the start position.
      * @param length the amount of data to read.
      * @return a {@link StorageView} containing the data that was read.
      */
@@ -109,11 +109,11 @@ public class BtrfsFile {
     /**
      * Reads the given amount of data from the given node starting at the given start position.
      *
-     * @param start the start position.
-     * @param length the amount of data to read.
-     * @param node the current node to read from.
+     * @param start            the start position.
+     * @param length           the amount of data to read.
+     * @param node             the current node to read from.
      * @param cumulativeLength the cumulative length of the intervals that have been visited so far.
-     * @param lengthRead the amount of data that has been read so far.
+     * @param lengthRead       the amount of data that has been read so far.
      * @return a {@link StorageView} containing the data that was read.
      */
     private StorageView read(int start, int length, BtrfsNode node, int cumulativeLength, int lengthRead) {
@@ -124,9 +124,9 @@ public class BtrfsFile {
     /**
      * Insert the given data into the file starting at the given start position.
      *
-     * @param start the start position.
+     * @param start     the start position.
      * @param intervals the intervals to write to.
-     * @param data the data to write into the storage.
+     * @param data      the data to write into the storage.
      */
     public void insert(int start, List<Interval> intervals, byte[] data) {
 
@@ -154,8 +154,8 @@ public class BtrfsFile {
     /**
      * Inserts the given data into the given leaf at the given index.
      *
-     * @param intervals the intervals to insert.
-     * @param indexedLeaf The node and index to insert at.
+     * @param intervals       the intervals to insert.
+     * @param indexedLeaf     The node and index to insert at.
      * @param remainingLength the remaining length of the data to insert.
      */
     private void insert(List<Interval> intervals, IndexedNodeLinkedList indexedLeaf, int remainingLength) {
@@ -168,13 +168,13 @@ public class BtrfsFile {
      * It ensures that the start position is not in the middle of an existing interval
      * and updates the childLengths of the visited nodes.
      *
-     * @param indexedNode The current Position in the tree.
-     * @param start The start position of the intervals to insert.
+     * @param indexedNode      The current Position in the tree.
+     * @param start            The start position of the intervals to insert.
      * @param cumulativeLength The length of the intervals in the tree up to the current node and index.
-     * @param insertionSize The total size of the intervals to insert.
-     * @param splitKey The right half of the interval that had to be split to ensure that the start position
-     *                 is not in the middle of an interval. It will be inserted once the leaf node is reached.
-     *                 If no split was necessary, this is null.
+     * @param insertionSize    The total size of the intervals to insert.
+     * @param splitKey         The right half of the interval that had to be split to ensure that the start position
+     *                         is not in the middle of an interval. It will be inserted once the leaf node is reached.
+     *                         If no split was necessary, this is null.
      * @return The leaf node and index, as well as the path to it, at which the intervals should be inserted.
      */
     private IndexedNodeLinkedList findInsertionPosition(IndexedNodeLinkedList indexedNode,
@@ -201,9 +201,9 @@ public class BtrfsFile {
      * Writes the given data to the given intervals and stores them in the file starting at the given start position.
      * This method will override existing data starting at the given start position.
      *
-     * @param start the start position.
+     * @param start     the start position.
      * @param intervals the intervals to write to.
-     * @param data the data to write into the storage.
+     * @param data      the data to write into the storage.
      */
     public void write(int start, List<Interval> intervals, byte[] data) {
         throw new UnsupportedOperationException("Not implemented yet"); //TODO H4 a): remove if implemented
@@ -212,7 +212,7 @@ public class BtrfsFile {
     /**
      * Removes the given number of bytes starting at the given position from this file.
      *
-     * @param start the start position of the bytes to remove
+     * @param start  the start position of the bytes to remove
      * @param length the amount of bytes to remove
      */
     public void remove(int start, int length) {
@@ -230,11 +230,11 @@ public class BtrfsFile {
     /**
      * Removes the given number of bytes starting at the given position from the given node.
      *
-     * @param start the start position of the bytes to remove
-     * @param length the amount of bytes to remove
-     * @param indexedNode the current node to remove from
+     * @param start            the start position of the bytes to remove
+     * @param length           the amount of bytes to remove
+     * @param indexedNode      the current node to remove from
      * @param cumulativeLength the length of the intervals up to the current node and index
-     * @param removedLength the length of the intervals that have already been removed
+     * @param removedLength    the length of the intervals that have already been removed
      * @return the number of bytes that have been removed
      */
     private int remove(int start, int length, IndexedNodeLinkedList indexedNode, int cumulativeLength, int removedLength) {
@@ -406,7 +406,7 @@ public class BtrfsFile {
 
                         // remove the key from the merged node
                         int removedInChild = remove(start, length, new IndexedNodeLinkedList(indexedNode,
-                            indexedNode.node.children[indexedNode.index], degree - 1),
+                                indexedNode.node.children[indexedNode.index], degree - 1),
                             cumulativeLength, removedLength);
 
                         // update childLength of current node

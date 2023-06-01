@@ -121,8 +121,12 @@ public class BtrfsFile {
         StorageView view = new EmptyStorageView(storage);
 
         // read children and keys if necessary
-        for (int i = 0; i < size; ++i) {
+        for (int i = 0; i < node.size; ++i) {
+            // do something, I have yet to figure out what
+            // red children up to some point
+            // then key
         }
+        // reed final child maybe
 
         // once everything has been added, return the view
         return view;

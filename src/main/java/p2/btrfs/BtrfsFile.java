@@ -117,8 +117,15 @@ public class BtrfsFile {
      * @return a {@link StorageView} containing the data that was read.
      */
     private StorageView read(int start, int length, BtrfsNode node, int cumulativeLength, int lengthRead) {
+        // create the view to store the data in
+        StorageView view = new EmptyStorageView(storage);
 
-        throw new UnsupportedOperationException("Not implemented yet"); //TODO H1: remove if implemented
+        // read children and keys if necessary
+        for (int i = 0; i < size; ++i) {
+        }
+
+        // once everything has been added, return the view
+        return view;
     }
 
     /**

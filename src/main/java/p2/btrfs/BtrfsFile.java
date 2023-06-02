@@ -152,26 +152,36 @@ public class BtrfsFile {
             view = view.plus(storage.createView(new Interval(key.start()+diff, lengthToBeRead)));
             // set variables for further stuff
             logicalAddress = start + lengthToBeRead;
-            lengthRead = lengthToBeRead;
+            lengthRead += lengthToBeRead;
             cumulativeLength += key.length();
             index++;
         } // index is now at a position where the child and then the key should be read, if some conditions are fulfilled
-
-
-        // read children and keys if necessary
-        for (int i = 0; i < node.size; ++i) {
-            // do something, I have yet to figure out what
-            // read children up to some point
-            // if (node.children[i] != null) {
-            //     // view = view.plus(read(node.children[i], ..., ...));
-            // }
-            // then key
-
+        while (lengthRead < length && index < node.size){
+            // read child at index
+            view = view.plus(read(start, length, node.children[index], cumulativeLength, lengthRead));
+            // adjust variables to keep track of what has been read
+            cumulativeLength += node.childLengths[index];
+            lengthRead += node.childLengths[index];
+            // read key if necessary
+            if (lengthRead < length){
+                // determine difference in logical address and start
+                int diff = start + lengthRead - logicalAddress;
+                // extract key for easy handling
+                Interval key = node.keys[index];
+                // determine how much of the key should be read
+                int lengthToBeRead = Math.min(key.length() - diff, length);
+                // read the key and append to view
+                view = view.plus(storage.createView(new Interval(key.start()+diff, lengthToBeRead)));
+                // set variables for further stuff
+                logicalAddress = start + lengthToBeRead;
+                lengthRead += lengthToBeRead;
+                index++;
+            }
         }
-        // read final child maybe
-
-
-
+        // read last child if needed
+        if (lengthRead < length){
+            view = view.plus(read(start, length, node.children[index], cumulativeLength, lengthRead));
+        }
         // once everything has been added, return the view
         return view;
     }

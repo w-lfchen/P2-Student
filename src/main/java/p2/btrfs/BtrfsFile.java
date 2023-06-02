@@ -121,28 +121,41 @@ public class BtrfsFile {
         StorageView view = new EmptyStorageView(storage);
         // find starting position
         // if the method is called, the position must be in the given node
-        int pos = 0; // position relative to the start of the node
-        boolean childAdded = false; // whether the child at pos has been added to cumulativeLength
-        while(pos < node.size){
-            if (cumulativeLength + node.childLengths[pos] <= start + lengthRead) {
-                cumulativeLength += node.childLengths[pos];
+        int index = 0; // index in the arrays
+        int logicalAddress; // logical address to be worked with
+        boolean childAdded = false; // whether the child at index has been added to cumulativeLength
+        // determine index
+        while(index < node.size){
+            if (cumulativeLength + node.childLengths[index] <= start + lengthRead) {
+                cumulativeLength += node.childLengths[index];
                 childAdded = true;
             }
             else break;
-            if (cumulativeLength + node.keys[pos].length() <= start + lengthRead){
-                cumulativeLength += node.keys[pos].length();
+            if (cumulativeLength + node.keys[index].length() <= start + lengthRead){
+                cumulativeLength += node.keys[index].length();
             }
             else break;
-            pos++;
+            index++;
             childAdded = false;
         }
-        // now the position has been determined, it may also be size-1, where a further check for the last child needs to be implemented
+        // now the index has been determined, it may also be size-1, where a further check for the last child needs to be implemented
+        logicalAddress = cumulativeLength; // first, add everything that has been skipped so far to the logical address
         if (childAdded) {
-            // if the child at pos has been added, the key needs to be read first, then continue from pos+1
-
-        } else { // child has not been added
-
-        }
+            // if the child at index has been added, the key needs to be read first, then continue from index+1
+            // determine difference in logical address and start
+            int diff = start + lengthRead - logicalAddress;
+            // extract key for easy handling
+            Interval key = node.keys[index];
+            // determine how much of the key should be read
+            int lengthToBeRead = Math.min(key.length() - diff, length);
+            // read the key and append to view
+            view = view.plus(storage.createView(new Interval(key.start()+diff, lengthToBeRead)));
+            // set variables for further stuff
+            logicalAddress = start + lengthToBeRead;
+            lengthRead = lengthToBeRead;
+            cumulativeLength += key.length();
+            index++;
+        } // index is now at a position where the child and then the key should be read, if some conditions are fulfilled
 
 
         // read children and keys if necessary
@@ -156,6 +169,8 @@ public class BtrfsFile {
 
         }
         // read final child maybe
+
+
 
         // once everything has been added, return the view
         return view;

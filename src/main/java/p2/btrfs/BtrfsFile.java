@@ -119,15 +119,41 @@ public class BtrfsFile {
     private StorageView read(int start, int length, BtrfsNode node, int cumulativeLength, int lengthRead) {
         // create the view to store the data in
         StorageView view = new EmptyStorageView(storage);
+        // find starting position
+        // if the method is called, the position must be in the given node
+        int pos = 0; // position relative to the start of the node
+        boolean childAdded = false; // whether the child at pos has been added to cumulativeLength
+        while(pos < node.size){
+            if (cumulativeLength + node.childLengths[pos] <= start + lengthRead) {
+                cumulativeLength += node.childLengths[pos];
+                childAdded = true;
+            }
+            else break;
+            if (cumulativeLength + node.keys[pos].length() <= start + lengthRead){
+                cumulativeLength += node.keys[pos].length();
+            }
+            else break;
+            pos++;
+            childAdded = false;
+        }
+        // now the position has been determined, it may also be size-1, where a further check for the last child needs to be implemented
+        if (childAdded) {
+            // if the child at pos has been added, the key needs to be read first, then continue from pos+1
+
+        } else { // child has not been added
+
+        }
+
 
         // read children and keys if necessary
         for (int i = 0; i < node.size; ++i) {
             // do something, I have yet to figure out what
             // read children up to some point
-            if (node.children[i] != null) {
-                // view = view.plus(read(node.children[i], ..., ...));
-            }
+            // if (node.children[i] != null) {
+            //     // view = view.plus(read(node.children[i], ..., ...));
+            // }
             // then key
+
         }
         // read final child maybe
 

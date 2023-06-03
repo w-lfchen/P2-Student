@@ -3,7 +3,10 @@ package p2;
 import p2.storage.AllocationStrategy;
 import p2.btrfs.BtrfsFile;
 import p2.storage.FileSystem;
+import p2.storage.Interval;
 import p2.storage.StringEncoder;
+
+import java.util.Arrays;
 
 /**
  * Main entry point in executing the program.
@@ -16,6 +19,21 @@ public class Main {
      * @param args program arguments, currently ignored
      */
     public static void main(String[] args) {
+
+        {
+            int[] a = new int[]{1, 2, 3, 4, 5, 6, 7};
+            int[] b = new int[a.length];
+            System.arraycopy(a, 3, b, 0, 3);
+            a = Arrays.copyOf(Arrays.copyOf(a, 3), 7);
+            Interval[] aa = new Interval[]{new Interval(1,1), new Interval(2,1), new Interval(3,1), new Interval(4,1), new Interval(5,1), new Interval(6,1), new Interval(7,1)};
+            System.out.println(Arrays.toString(aa));
+            aa = Arrays.copyOf(Arrays.copyOf(aa, 3), 7);
+
+            System.out.println(aa.length);
+            System.out.println(Arrays.toString(a));
+            System.out.println(Arrays.toString(b));
+            System.out.println(Arrays.toString(aa));
+        }
 
         String fileName = "example.txt";
         StringEncoder encoder = StringEncoder.INSTANCE;

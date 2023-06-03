@@ -298,12 +298,12 @@ public class BtrfsFile {
             return;
         }
         // before the splitting happens, the parent needs to be looked at; if the parent is full, split parent as well
-        BtrfsNode parent = indexedNode.parent.node;
-        if (parent.isFull()) {
+        if (indexedNode.parent.node.isFull()) {
             // split the parent
             split(indexedNode.parent);
         }
         // now the parent will be able to hold the node when it is split
+        BtrfsNode parent = indexedNode.parent.node;
         // new node for the right values
         BtrfsNode rightNode = new BtrfsNode(this.degree);
         // extract index in parent node

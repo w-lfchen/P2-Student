@@ -288,8 +288,8 @@ public class BtrfsFile {
             node.size = degree-1;
             rightNode.size = degree-1;
             // once the children of the new root have been set up, calculate their lengths and store them
-            newRoot.childLengths[0] = Arrays.stream(node.keys).mapToInt(Interval::length).sum() + Arrays.stream(node.childLengths).sum();
-            newRoot.childLengths[1] = Arrays.stream(rightNode.keys).mapToInt(Interval::length).sum() + Arrays.stream(rightNode.childLengths).sum();
+            newRoot.childLengths[0] = Arrays.stream(node.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(node.childLengths).sum();
+            newRoot.childLengths[1] = Arrays.stream(rightNode.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(rightNode.childLengths).sum();
             // now, fix the IndexedNodeList; start by adding a new node to reference the new root
             indexedNode.parent = new IndexedNodeLinkedList(null, newRoot, indexedNode.index < degree ? 0 : 1);
             // check whether the node attribute needs to be adjusted

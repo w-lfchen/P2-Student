@@ -258,8 +258,23 @@ public class BtrfsFile {
      * @param indexedNode The node to split.
      */
     private void split(IndexedNodeLinkedList indexedNode) {
+        // create node variable to operate on
+        BtrfsNode node = indexedNode.node;
+        // if the node to be split is the root, special stuff needs to happen
+        if (node == this.root){
+            // split root
 
-        throw new UnsupportedOperationException("Not implemented yet"); //TODO H2 a): remove if implemented
+            return;
+        }
+        // before the splitting happens, the parent needs to be looked at; if the parent is full, split parent as well
+        if (indexedNode.parent.node.isFull()){
+            // split the parent
+            split(indexedNode.parent);
+        }
+        // now the parent will be able to hold the node when it is split
+
+        // split node
+        // determine whether the node is now left or right from the indexedNode index
     }
 
     /**

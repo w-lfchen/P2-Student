@@ -261,8 +261,6 @@ public class BtrfsFile {
     private void split(IndexedNodeLinkedList indexedNode) { // TODO: test
         // create node variable to operate on
         BtrfsNode node = indexedNode.node;
-        // sanity check
-        if (!node.isFull()) throw new IllegalStateException("Node is not empty, why are you trying to split it");
         // if the node to be split is the root, special stuff needs to happen
         if (node == this.root){ // split root if this is true
             // create new root node
@@ -302,14 +300,60 @@ public class BtrfsFile {
             return;
         }
         // before the splitting happens, the parent needs to be looked at; if the parent is full, split parent as well
-        if (indexedNode.parent.node.isFull()){
+        BtrfsNode parent = indexedNode.parent.node;
+        if (parent.isFull()){
             // split the parent
             split(indexedNode.parent);
         }
         // now the parent will be able to hold the node when it is split
-
-        // split node
+        // new node for the right values
+        BtrfsNode rightNode = new BtrfsNode(this.degree);
+        // extract index in parent node
+        int index = indexedNode.parent.index;
+        // insert middle key of node in parent at the correct position; start by making room for the new key
+        // for (int i = parent.size-1; i >= index;--i){
+        //     Interval tmp = parent.keys[i];
+        //     parent.keys[i] = parent.keys[i+1];
+        //     parent.keys[i+1] = tmp;
+        // }
+        System.arraycopy(parent.keys, index, parent.keys, index + 1, parent.size-index);
+        // insert the key
+        parent.keys[index] = node.keys[degree-1];
+        // move children and their lengths
+        // for (int i = parent.size; i > index;--i){
+        //     BtrfsNode tmp = parent.children[i];
+        //     int tmpLength = parent.childLengths[i];
+        //     parent.children[i] = parent.children[i+1];;
+        //     parent.childLengths[i] = parent.childLengths[i+1];;
+        //     parent.children[i+1] = tmp;
+        //     parent.childLengths[i+1] = tmpLength;
+        // }
+        System.arraycopy(parent.children, index + 1, parent.children, index + 2, parent.size-index);
+        System.arraycopy(parent.childLengths, index + 1, parent.childLengths, index + 2, parent.size-index);
+        // set the new child node
+        parent.children[index+1] = rightNode;
+        // set up children; the values are this way because this method is only called when the array to be split is full
+        // fix children, their lengths and key arrays, start with the right node before modifying node since the values are taken from the left node
+        System.arraycopy(node.keys, degree, rightNode.keys, 0, degree-1);
+        System.arraycopy(node.children,  degree, rightNode.children, 0, degree);
+        System.arraycopy(node.childLengths,  degree, rightNode.childLengths, 0, degree);
+        // maybe a bit hacky, but should work, the 2nd call is needed to restore the length by padding it; goal is to null all values that have been copied
+        node.keys = Arrays.copyOf(Arrays.copyOf(node.keys,degree-1), 2*degree-1);
+        node.children = Arrays.copyOf(Arrays.copyOf(node.children,degree), 2*degree);
+        node.childLengths = Arrays.copyOf(Arrays.copyOf(node.childLengths,degree), 2*degree);
+        // fix children sizes
+        node.size = degree-1;
+        rightNode.size = degree-1;
+        // set the new values for the childLengths
+        parent.childLengths[index] = Arrays.stream(node.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(node.childLengths).sum();
+        parent.childLengths[index + 1] = Arrays.stream(rightNode.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(rightNode.childLengths).sum();
         // determine whether the node is now left or right from the indexedNode index
+        // check whether the node attribute needs to be adjusted
+        if (indexedNode.index >= degree) {
+            indexedNode.node = rightNode;
+            indexedNode.index -= degree;
+            indexedNode.parent.index++;
+        }
     }
 
     /**

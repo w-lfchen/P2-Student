@@ -35,6 +35,23 @@ public class Main {
             System.out.println(Arrays.toString(aa));
         }
 
+        {
+            int degree = 3;
+            int index = 1;
+            int size = 3;
+            int[] a = new int[]{1,2,3,0,0};
+            int[] b = Arrays.copyOf(a, 5);
+            for (int i = 3; i >= index; --i){
+                int tmp = a[i];
+                a[i] = a[i+1];
+                a[i+1] = tmp;
+            }
+            System.arraycopy(b, index, b, index+1, size-index);
+            //b[index] = 0;
+            System.out.println(Arrays.toString(a)); // :D
+            System.out.println(Arrays.toString(b));
+        }
+
         String fileName = "example.txt";
         StringEncoder encoder = StringEncoder.INSTANCE;
         FileSystem fileSystem = new FileSystem(AllocationStrategy.NEXT_FIT, 200);

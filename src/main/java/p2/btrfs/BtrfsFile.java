@@ -246,8 +246,8 @@ public class BtrfsFile {
                                                         int cumulativeLength,
                                                         int insertionSize,
                                                         Interval splitKey) {
-
-        throw new UnsupportedOperationException("Not implemented yet"); //TODO H2 b): remove if implemented
+        // needs to be the parent of something
+        return indexedNode;
     }
 
     /**

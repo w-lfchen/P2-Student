@@ -134,7 +134,7 @@ public class TreeUtil {
     }
 
     private static void treeToString(BtrfsNode node, Storage storage, StringBuilder builder) {
-        builder.append("[");
+        builder.append("{");
         for (int i = 0; i < node.size; i++) {
             if (node.children[i] != null) {
                 if (i > 0) {
@@ -162,7 +162,7 @@ public class TreeUtil {
             treeToString(node.children[node.size], storage, builder);
         }
 
-        builder.append("]");
+        builder.append("}");
     }
 
     public static String treeToString(List<Object> tree) {
@@ -177,7 +177,7 @@ public class TreeUtil {
 
     @SuppressWarnings("unchecked")
     private static void treeToString(List<Object> tree, StringBuilder builder) {
-        builder.append("[");
+        builder.append("{");
         for (int i = 0; i < tree.size(); i++) {
             Object current = tree.get(i);
 
@@ -194,7 +194,7 @@ public class TreeUtil {
                 builder.append(",");
             }
         }
-        builder.append("]");
+        builder.append("}");
     }
 
     public static String keyToString(Storage storage, Interval key) {

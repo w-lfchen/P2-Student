@@ -282,30 +282,6 @@
       "childIndex": 4,
       "expectedParentIndex": 2,
       "expectedChildIndex": 1
-    },
-    {
-      "tree": [
-        [
-          "A",
-          "B",
-          "C",
-          "D",
-          "E"
-        ],
-        "F",
-        [
-          "G",
-          "H",
-          "I",
-          "J",
-          "K"
-        ]
-      ],
-      "degree": 3,
-      "parentIndex": 1,
-      "childIndex": 5,
-      "expectedParentIndex": 2,
-      "expectedChildIndex": 2
     }
   ],
   "testSplitRoot": [
@@ -347,14 +323,6 @@
       "index": 4,
       "expectedParentIndex": 1,
       "expectedChildIndex": 1,
-      "expected": [["A", "B"], "C", ["D", "E"]]
-    },
-    {
-      "tree": ["A", "B", "C", "D", "E"],
-      "degree": 3,
-      "index": 5,
-      "expectedParentIndex": 1,
-      "expectedChildIndex": 2,
       "expected": [["A", "B"], "C", ["D", "E"]]
     },
     {

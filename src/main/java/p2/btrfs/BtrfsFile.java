@@ -241,13 +241,19 @@ public class BtrfsFile {
      *                         If no split was necessary, this is null.
      * @return The leaf node and index, as well as the path to it, at which the intervals should be inserted.
      */
-    private IndexedNodeLinkedList findInsertionPosition(IndexedNodeLinkedList indexedNode,
+    private IndexedNodeLinkedList findInsertionPosition(IndexedNodeLinkedList indexedNode, // TODO: test
                                                         int start,
                                                         int cumulativeLength,
                                                         int insertionSize,
                                                         Interval splitKey) {
+        // act different based on whether the current node is a leaf or not maybe
+        // find index with while loop, maybe reuse ideas from read
+        // split if necessary
+        // create listItem to store next node, this might need to be moved to the end
+        IndexedNodeLinkedList nextNode = new IndexedNodeLinkedList(indexedNode, null, 0);
+        // TODO: figure out what to do, first ideas are already there
         // needs to be the parent of something
-        return indexedNode;
+        return nextNode;
     }
 
     /**

@@ -296,12 +296,16 @@ public class BtrfsFile {
                 // index should not matter here
                 split(new IndexedNodeLinkedList(indexedNode, node.children[index],0));
             }
+            // adjust child length
+            node.childLengths[index] += insertionSize;
             return findInsertionPosition(new IndexedNodeLinkedList(indexedNode, node.children[index], index), start, cumulativeLength, insertionSize, splitKey);
         } else {
             // if it is not child, it's a key that might need to be split
             // if this is true, the position is right before the key
             if (cumulativeLength == start){
                 // ensure that the rightmost position is chosen
+                // adjust child length
+                node.childLengths[index] += insertionSize;
                 return findInsertionPosition(new IndexedNodeLinkedList(indexedNode, node.children[index], node.children[index].size), start, cumulativeLength, insertionSize, splitKey);
             } else {
                 // the key at index needs to be split
@@ -321,6 +325,8 @@ public class BtrfsFile {
                 insertionSize += splitKey.length();
                 // the index of the indexed node also needs to be increased
                 indexedNode.index++;
+                // adjust child length
+                node.childLengths[index + 1] += insertionSize;
                 // recursive call, now with splitKey, also increase index by one because of the splitting
                 return findInsertionPosition(new IndexedNodeLinkedList(indexedNode, node.children[index + 1], 0), start, cumulativeLength, insertionSize, splitKey);
             }

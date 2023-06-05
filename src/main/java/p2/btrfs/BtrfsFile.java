@@ -249,46 +249,81 @@ public class BtrfsFile {
         // extract node to operate on
         BtrfsNode node = indexedNode.node;
         // keep track of the index in the node
-        int index = 0;
-        boolean childAdded = false; // whether the child at index has been added to cumulativeLength
-        // determine index
+        int index = indexedNode.index;
+        boolean nextIsChild = true; // whether the next object in the node is a child node or an interval
         while (index < node.size) {
-            if (cumulativeLength + node.childLengths[index] <= start) {
+            if (cumulativeLength + node.childLengths[index] < start) {
                 cumulativeLength += node.childLengths[index];
-                childAdded = true;
+                nextIsChild = false;
             } else break;
+            // equal is accepted here because that way the position will be right behind the key at index which is the correct one
             if (cumulativeLength + node.keys[index].length() <= start) {
                 cumulativeLength += node.keys[index].length();
             } else break;
             index++;
-            childAdded = false;
+            nextIsChild = true;
         }
-        // childAdded now stores whether the starting position is in the key or child node at index
-        if (childAdded){ // if it is at a key position, the interval at that position needs to be split
-            // determine position to split interval at
-            int positionInInterval =  start - node.keys[index].start();
-            // create right Interval // TODO: very likely off-by-one-error, test!
-            Interval rightInterval = new Interval(node.keys[index].start() + positionInInterval, node.keys[index].length() - positionInInterval);
-            // store the right half in splitKey
-            splitKey = rightInterval;
-            insertionSize += rightInterval.length();
-            // now that the interval has been split, the position is in the next child, therefore increase index and then proceed as if the position is in the child at index
-            index++;
-        }
-        // split child if necessary, then recursive call, maybe some more preparation
+        // fix index as it has now changed
         indexedNode.index = index;
-        if (!node.isLeaf() && node.children[index].isFull()) split(new IndexedNodeLinkedList(indexedNode, node.children[index], index));
-        // maybe reset node if necessary?
-
-        // act different based on whether the current node is a leaf or not maybe
-        IndexedNodeLinkedList nextNode = new IndexedNodeLinkedList(indexedNode, node.children[index], index);
-        if (!node.isLeaf()){
-        // create listItem to store next node, this might need to be moved to the end
-        // needs to be the parent of something
-            return findInsertionPosition(nextNode, start, cumulativeLength, insertionSize, splitKey);
+        // the loop has terminated, meaning that either index is equal to size, so the last child is where the position can be found
+        // or the added value of the next object is bigger than start, therefore the index is in the next object
+        // first, handle the case of the current node being a leaf
+        if (node.isLeaf()){
+            // there are only keys now, the nextIsChild variable is useless
+            if (cumulativeLength == start){
+                // no splitting necessary
+                return indexedNode;
+            } else {
+                // splitting is needed
+                // save original Interval
+                Interval leftInterval = node.keys[index];
+                // calculate lengths
+                int leftIntervalLength = start-cumulativeLength;
+                int rightIntervalLength = leftInterval.length() - leftIntervalLength;
+                // create room for the right interval by shifting everything right of the left interval by one
+                System.arraycopy(node.keys, index + 1, node.keys, index + 2, node.size);
+                // set up new intervals with the adjusted values
+                node.keys[index] = new Interval(leftInterval.start(), leftIntervalLength);
+                node.keys[index + 1] = new Interval(leftInterval.start() + leftIntervalLength, rightIntervalLength);
+                // return list, index + 1 is the insertion position
+                indexedNode.index++;
+                return indexedNode;
+            }
         }
-        else{
-            return nextNode;
+        // if it is a child, just continue there and split if necessary, also covers the case where the position is right behind a key
+        if (nextIsChild) {
+            if (node.children[index].isFull()){
+                // index should not matter here
+                split(new IndexedNodeLinkedList(indexedNode, node.children[index],0));
+            }
+            return findInsertionPosition(new IndexedNodeLinkedList(indexedNode, node.children[index], index), start, cumulativeLength, insertionSize, splitKey);
+        } else {
+            // if it is not child, it's a key that might need to be split
+            // if this is true, the position is right before the key
+            if (cumulativeLength == start){
+                // ensure that the rightmost position is chosen
+                return findInsertionPosition(new IndexedNodeLinkedList(indexedNode, node.children[index], node.children[index].size), start, cumulativeLength, insertionSize, splitKey);
+            } else {
+                // the key at index needs to be split
+                // save original Interval
+                Interval leftInterval = node.keys[index];
+                // calculate lengths
+                int leftIntervalLength = start-cumulativeLength;
+                int rightIntervalLength = leftInterval.length() - leftIntervalLength;
+                // create right interval
+                Interval rightInterval = new Interval(leftInterval.start() + leftIntervalLength, rightIntervalLength);
+                // adjust left interval
+                node.keys[index] = new Interval(leftInterval.start(), leftIntervalLength);
+                // don't forget cumulativeLength
+                cumulativeLength += node.keys[index].length();
+                // assign splitKey
+                splitKey = rightInterval;
+                insertionSize += splitKey.length();
+                // the index of the indexed node also needs to be increased
+                indexedNode.index++;
+                // recursive call, now with splitKey, also increase index by one because of the splitting
+                return findInsertionPosition(new IndexedNodeLinkedList(indexedNode, node.children[index + 1], 0), start, cumulativeLength, insertionSize, splitKey);
+            }
         }
     }
 

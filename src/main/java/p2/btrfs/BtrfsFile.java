@@ -259,9 +259,9 @@ public class BtrfsFile {
             // equal is accepted here because that way the position will be right behind the key at index which is the correct one
             if (cumulativeLength + node.keys[index].length() <= start) {
                 cumulativeLength += node.keys[index].length();
+                nextIsChild = true;
+                index++;
             } else break;
-            index++;
-            nextIsChild = true;
         }
         // fix index as it has now changed
         indexedNode.index = index;
@@ -269,9 +269,17 @@ public class BtrfsFile {
         // or the added value of the next object is bigger than start, therefore the index is in the next object
         // first, handle the case of the current node being a leaf
         if (node.isLeaf()){
-            // there are only keys now, the nextIsChild variable is useless
+            // there are only keys now, the nextIsChild variable is useless here
             if (cumulativeLength == start){
                 // no splitting necessary
+                if (splitKey != null){
+                    // shift to create space
+                    System.arraycopy(node.keys, 0, node.keys, 1, node.size-1);
+                    // if splitKey exists, it needs to be inserted at position 0
+                    node.keys[0] = splitKey;
+                    // increase size to account for the inserted key
+                    node.size++;
+                }
                 return indexedNode;
             } else {
                 // splitting is needed
@@ -281,29 +289,35 @@ public class BtrfsFile {
                 int leftIntervalLength = start-cumulativeLength;
                 int rightIntervalLength = leftInterval.length() - leftIntervalLength;
                 // create room for the right interval by shifting everything right of the left interval by one
-                System.arraycopy(node.keys, index + 1, node.keys, index + 2, node.size);
+                System.arraycopy(node.keys, index + 1, node.keys, index + 2, node.size-(index + 1));
                 // set up new intervals with the adjusted values
                 node.keys[index] = new Interval(leftInterval.start(), leftIntervalLength);
                 node.keys[index + 1] = new Interval(leftInterval.start() + leftIntervalLength, rightIntervalLength);
                 // return list, index + 1 is the insertion position
                 indexedNode.index++;
+                // account for increased size
+                node.size++;
                 return indexedNode;
             }
         }
         // if it is a child, just continue there and split if necessary, also covers the case where the position is right behind a key
         if (nextIsChild) {
+            // TODO: something is wrong around here
             if (node.children[index].isFull()){
-                // index should not matter here
-                split(new IndexedNodeLinkedList(indexedNode, node.children[index],0));
+                // leftmost index for good measure
+                split(new IndexedNodeLinkedList(indexedNode, node.children[index], 0));
             }
             // adjust child length
             node.childLengths[index] += insertionSize;
-            return findInsertionPosition(new IndexedNodeLinkedList(indexedNode, node.children[index], index), start, cumulativeLength, insertionSize, splitKey);
+            return findInsertionPosition(new IndexedNodeLinkedList(indexedNode, node.children[index], 0), start, cumulativeLength, insertionSize, splitKey);
         } else {
             // if it is not child, it's a key that might need to be split
             // if this is true, the position is right before the key
             if (cumulativeLength == start){
-                // ensure that the rightmost position is chosen
+                // ensure that the rightmost position is chosen not only during potential splitting
+                if (node.children[index].isFull()){
+                    split(new IndexedNodeLinkedList(indexedNode, node.children[index],node.children[index].size-1));
+                }
                 // adjust child length
                 node.childLengths[index] += insertionSize;
                 return findInsertionPosition(new IndexedNodeLinkedList(indexedNode, node.children[index], node.children[index].size), start, cumulativeLength, insertionSize, splitKey);
@@ -325,6 +339,11 @@ public class BtrfsFile {
                 insertionSize += splitKey.length();
                 // the index of the indexed node also needs to be increased
                 indexedNode.index++;
+                // split if necessary
+                if (node.children[index + 1].isFull()){
+                    // leftmost index because that is the goal
+                    split(new IndexedNodeLinkedList(indexedNode, node.children[index + 1],0));
+                }
                 // adjust child length
                 node.childLengths[index + 1] += insertionSize;
                 // recursive call, now with splitKey, also increase index by one because of the splitting

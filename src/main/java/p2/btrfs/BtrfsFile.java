@@ -263,11 +263,25 @@ public class BtrfsFile {
             index++;
             childAdded = false;
         }
-
+        // childAdded now stores whether the starting position is in the key or child node at index
+        if (childAdded){ // if it is at a key position, the interval at that position needs to be split
+            // determine position to split interval at
+            int positionInInterval =  start - node.keys[index].start();
+            // create right Interval // TODO: very likely off-by-one-error, test!
+            Interval rightInterval = new Interval(node.keys[index].start() + positionInInterval, node.keys[index].length() - positionInInterval);
+            // store the right half in splitKey
+            splitKey = rightInterval;
+            // now that the interval has been split, the position is in the next child, therefore increase index and then proceed as if the position is in the child at index
+            index++;
+        }
+        // split child if necessary, then recursive call, maybe some more preparation
+        indexedNode.index = index;
+        if (node.children[index].isFull()) split(indexedNode);
+        // maybe reset node if necessary?
 
         // act different based on whether the current node is a leaf or not maybe
-        // find index with while loop, maybe reuse ideas from read
-        // split if necessary
+
+
         // create listItem to store next node, this might need to be moved to the end
         IndexedNodeLinkedList nextNode = new IndexedNodeLinkedList(indexedNode, null, 0);
         // TODO: figure out what to do, first ideas are already there

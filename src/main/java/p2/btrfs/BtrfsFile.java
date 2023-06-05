@@ -246,6 +246,25 @@ public class BtrfsFile {
                                                         int cumulativeLength,
                                                         int insertionSize,
                                                         Interval splitKey) {
+        // extract node to operate on
+        BtrfsNode node = indexedNode.node;
+        // keep track of the index in the node
+        int index = 0;
+        boolean childAdded = false; // whether the child at index has been added to cumulativeLength
+        // determine index
+        while (index < node.size) {
+            if (cumulativeLength + node.childLengths[index] < start) {
+                cumulativeLength += node.childLengths[index];
+                childAdded = true;
+            } else break;
+            if (cumulativeLength + node.keys[index].length() < start) {
+                cumulativeLength += node.keys[index].length();
+            } else break;
+            index++;
+            childAdded = false;
+        }
+
+
         // act different based on whether the current node is a leaf or not maybe
         // find index with while loop, maybe reuse ideas from read
         // split if necessary

@@ -253,11 +253,11 @@ public class BtrfsFile {
         boolean childAdded = false; // whether the child at index has been added to cumulativeLength
         // determine index
         while (index < node.size) {
-            if (cumulativeLength + node.childLengths[index] < start) {
+            if (cumulativeLength + node.childLengths[index] <= start) {
                 cumulativeLength += node.childLengths[index];
                 childAdded = true;
             } else break;
-            if (cumulativeLength + node.keys[index].length() < start) {
+            if (cumulativeLength + node.keys[index].length() <= start) {
                 cumulativeLength += node.keys[index].length();
             } else break;
             index++;
@@ -271,22 +271,25 @@ public class BtrfsFile {
             Interval rightInterval = new Interval(node.keys[index].start() + positionInInterval, node.keys[index].length() - positionInInterval);
             // store the right half in splitKey
             splitKey = rightInterval;
+            insertionSize += rightInterval.length();
             // now that the interval has been split, the position is in the next child, therefore increase index and then proceed as if the position is in the child at index
             index++;
         }
         // split child if necessary, then recursive call, maybe some more preparation
         indexedNode.index = index;
-        if (node.children[index].isFull()) split(indexedNode);
+        if (!node.isLeaf() && node.children[index].isFull()) split(new IndexedNodeLinkedList(indexedNode, node.children[index], index));
         // maybe reset node if necessary?
 
         // act different based on whether the current node is a leaf or not maybe
-
-
+        IndexedNodeLinkedList nextNode = new IndexedNodeLinkedList(indexedNode, node.children[index], index);
+        if (!node.isLeaf()){
         // create listItem to store next node, this might need to be moved to the end
-        IndexedNodeLinkedList nextNode = new IndexedNodeLinkedList(indexedNode, null, 0);
-        // TODO: figure out what to do, first ideas are already there
         // needs to be the parent of something
-        return nextNode;
+            return findInsertionPosition(nextNode, start, cumulativeLength, insertionSize, splitKey);
+        }
+        else{
+            return nextNode;
+        }
     }
 
     /**

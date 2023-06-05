@@ -117,7 +117,7 @@ public class BtrfsFile {
      * @param lengthRead       the amount of data that has been read so far.
      * @return a {@link StorageView} containing the data that was read.
      */
-    private StorageView read(int start, int length, BtrfsNode node, int cumulativeLength, int lengthRead) {
+    private StorageView read(int start, int length, BtrfsNode node, int cumulativeLength, int lengthRead) { // TODO: test, check for off-by-one errors!!
         // create the view to store the data in
         StorageView view = new EmptyStorageView(storage);
         // find starting position
@@ -127,11 +127,11 @@ public class BtrfsFile {
         boolean childAdded = false; // whether the child at index has been added to cumulativeLength
         // determine index
         while (index < node.size) {
-            if (cumulativeLength + node.childLengths[index] <= start + lengthRead) {
+            if (cumulativeLength + node.childLengths[index] < start + lengthRead) {
                 cumulativeLength += node.childLengths[index];
                 childAdded = true;
             } else break;
-            if (cumulativeLength + node.keys[index].length() <= start + lengthRead) {
+            if (cumulativeLength + node.keys[index].length() < start + lengthRead) {
                 cumulativeLength += node.keys[index].length();
             } else break;
             index++;

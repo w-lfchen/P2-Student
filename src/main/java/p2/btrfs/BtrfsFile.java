@@ -794,8 +794,11 @@ public class BtrfsFile {
      * @param indexedNode the node to rotate to.
      */
     private void rotateFromRightSibling(IndexedNodeLinkedList indexedNode) {
-
-        throw new UnsupportedOperationException("Not implemented yet"); //TODO H3 a): remove if implemented
+        // save the leftmost element from the right sibling
+        // shift right sibling's keys to fill the gap
+        // add key in parent node to left sibling
+        // replace key in parent node with key from right sibling
+        // fix sizes
     }
 
     /**

@@ -246,6 +246,8 @@ public class BtrfsFile {
                                                         int cumulativeLength,
                                                         int insertionSize,
                                                         Interval splitKey) {
+        int startCumLength = cumulativeLength;
+        int startIndex = indexedNode.index;
         // extract node to operate on
         BtrfsNode node = indexedNode.node;
         // keep track of the index in the node
@@ -309,6 +311,8 @@ public class BtrfsFile {
             if (node.children[index].isFull()){
                 // leftmost index for good measure
                 split(new IndexedNodeLinkedList(indexedNode, node.children[index], 0));
+                indexedNode.index = startIndex;
+                return findInsertionPosition(indexedNode, start, startCumLength, insertionSize, splitKey);
             }
             // adjust child length
             node.childLengths[index] += insertionSize;
@@ -320,6 +324,8 @@ public class BtrfsFile {
                 // ensure that the rightmost position is chosen not only during potential splitting
                 if (node.children[index].isFull()){
                     split(new IndexedNodeLinkedList(indexedNode, node.children[index],node.children[index].size-1));
+                    indexedNode.index = startIndex;
+                    return findInsertionPosition(indexedNode, start, startCumLength, insertionSize, splitKey);
                 }
                 // adjust child length
                 node.childLengths[index] += insertionSize;
@@ -346,6 +352,8 @@ public class BtrfsFile {
                 if (node.children[index + 1].isFull()){
                     // leftmost index because that is the goal
                     split(new IndexedNodeLinkedList(indexedNode, node.children[index + 1],0));
+                    indexedNode.index = startIndex;
+                    return findInsertionPosition(indexedNode, start, startCumLength, insertionSize, splitKey);
                 }
                 // adjust child length
                 node.childLengths[index + 1] += insertionSize;

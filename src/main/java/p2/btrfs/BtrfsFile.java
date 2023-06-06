@@ -246,6 +246,7 @@ public class BtrfsFile {
                                                         int cumulativeLength,
                                                         int insertionSize,
                                                         Interval splitKey) {
+        // save original state
         int startCumLength = cumulativeLength;
         int startIndex = indexedNode.index;
         // extract node to operate on
@@ -311,6 +312,7 @@ public class BtrfsFile {
             if (node.children[index].isFull()){
                 // leftmost index for good measure
                 split(new IndexedNodeLinkedList(indexedNode, node.children[index], 0));
+                // restore state and start over
                 indexedNode.index = startIndex;
                 return findInsertionPosition(indexedNode, start, startCumLength, insertionSize, splitKey);
             }
@@ -324,6 +326,7 @@ public class BtrfsFile {
                 // ensure that the rightmost position is chosen not only during potential splitting
                 if (node.children[index].isFull()){
                     split(new IndexedNodeLinkedList(indexedNode, node.children[index],node.children[index].size-1));
+                    // restore state and start over
                     indexedNode.index = startIndex;
                     return findInsertionPosition(indexedNode, start, startCumLength, insertionSize, splitKey);
                 }
@@ -352,6 +355,7 @@ public class BtrfsFile {
                 if (node.children[index + 1].isFull()){
                     // leftmost index because that is the goal
                     split(new IndexedNodeLinkedList(indexedNode, node.children[index + 1],0));
+                    // restore state and start over
                     indexedNode.index = startIndex;
                     return findInsertionPosition(indexedNode, start, startCumLength, insertionSize, splitKey);
                 }

@@ -86,7 +86,6 @@ public class MergeTests {
         TreeUtil.FileAndStorage actualFileAndStorage = constructTree(tree, degree);
         BtrfsFile actualTree = actualFileAndStorage.file();
         BtrfsNode root = getRoot(actualTree);
-        BtrfsNode child = root.children[parentIndex];
 
         TreeUtil.FileAndStorage expectedFileAndStorage = constructTree(expected, degree);
         BtrfsFile expectedTree = expectedFileAndStorage.file();
@@ -120,8 +119,8 @@ public class MergeTests {
 
         assertEquals(expectedChildIndex, indexedChild.index, context.build(),
             TR -> "The index of the child is not correct");
-        assertEquals(child, indexedChild.node, context.build(),
-            TR -> "The node of the child should not change");
+        assertEquals(root.children[expectedParentIndex], indexedChild.node, context.build(),
+            TR -> "The node of the child is not correct");
         assertEquals(indexedRoot, indexedChild.parent, context.build(),
             TR -> "The parent of the child should not change");
     }

@@ -90,6 +90,9 @@ public class TreeUtil {
             expectedStorage.read(expectedNode.keys[i].start(), expectedBytes, 0, expectedNode.keys[i].length());
             String expectedString = StringEncoder.INSTANCE.decode(expectedBytes);
 
+            assertNotNull(actualNode.keys[i], context, TR -> message + " The key at index %d of the node %s should not be <null>"
+                .formatted(finalI, treeToString(actualNode, actualStorage)));
+
             byte[] actualBytes = new byte[actualNode.keys[i].length()];
             actualStorage.read(actualNode.keys[i].start(), actualBytes, 0, actualNode.keys[i].length());
             String actualString = StringEncoder.INSTANCE.decode(actualBytes);

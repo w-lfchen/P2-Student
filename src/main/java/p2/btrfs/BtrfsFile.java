@@ -303,6 +303,7 @@ public class BtrfsFile {
         // if it is a child, just continue there and split if necessary, also covers the case where the position is right behind a key
         if (nextIsChild) {
             // TODO: something is wrong around here
+            // it has to do with the splitting, maybe need to adjust some values afterwards
             if (node.children[index].isFull()){
                 // leftmost index for good measure
                 split(new IndexedNodeLinkedList(indexedNode, node.children[index], 0));

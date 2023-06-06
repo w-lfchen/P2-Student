@@ -260,8 +260,8 @@ public class BtrfsFile {
             if (cumulativeLength + node.keys[index].length() <= start) {
                 cumulativeLength += node.keys[index].length();
                 nextIsChild = true;
-                index++;
             } else break;
+            index++;
         }
         // fix index as it has now changed
         indexedNode.index = index;
@@ -274,7 +274,7 @@ public class BtrfsFile {
                 // no splitting necessary
                 if (splitKey != null){
                     // shift to create space
-                    System.arraycopy(node.keys, 0, node.keys, 1, node.size-1);
+                    System.arraycopy(node.keys, 0, node.keys, 1, node.size);
                     // if splitKey exists, it needs to be inserted at position 0
                     node.keys[0] = splitKey;
                     // increase size to account for the inserted key

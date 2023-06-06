@@ -799,6 +799,7 @@ public class BtrfsFile {
         // add key in parent node to left sibling
         // replace key in parent node with key from right sibling
         // fix sizes
+        // TODO: figure out children
     }
 
     /**

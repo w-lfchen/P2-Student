@@ -154,7 +154,6 @@ public class EnsureSizeTests {
         TreeUtil.FileAndStorage actualFileAndStorage = constructTree(tree, degree);
         BtrfsFile actualTree = actualFileAndStorage.file();
         BtrfsNode root = getRoot(actualTree);
-        BtrfsNode child = childIndex == -1 ? null : root.children[parentIndex];
         int initialSize = actualTree.getSize();
 
         IndexedNodeLinkedList indexedRoot = new IndexedNodeLinkedList(null, root, parentIndex);
@@ -208,7 +207,7 @@ public class EnsureSizeTests {
         if (indexedChild != null) {
             assertEquals(matchingTreeIndex == 0 ? expectedChildIndex1 : expectedChildIndex2, indexedChild.index, context.build(),
                 TR -> "The index of the child is not correct");
-            assertEquals(child, indexedChild.node, context.build(),
+            assertEquals(root.children[matchingTreeIndex == 0 ? expectedParentIndex1 : expectedParentIndex2], indexedChild.node, context.build(),
                 TR -> "The node of the child should not change");
             assertEquals(indexedRoot, indexedChild.parent, context.build(),
                 TR -> "The parent of the child should not change");

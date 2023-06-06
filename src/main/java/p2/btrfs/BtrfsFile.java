@@ -251,6 +251,7 @@ public class BtrfsFile {
         // keep track of the index in the node
         int index = indexedNode.index;
         boolean nextIsChild = true; // whether the next object in the node is a child node or an interval
+        // find index
         while (index < node.size) {
             if (cumulativeLength + node.childLengths[index] < start) {
                 cumulativeLength += node.childLengths[index];
@@ -304,6 +305,7 @@ public class BtrfsFile {
         if (nextIsChild) {
             // TODO: something is wrong around here
             // it has to do with the splitting, maybe need to adjust some values afterwards
+            // split is being called, then the wrong node is entered
             if (node.children[index].isFull()){
                 // leftmost index for good measure
                 split(new IndexedNodeLinkedList(indexedNode, node.children[index], 0));

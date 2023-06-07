@@ -816,6 +816,8 @@ public class BtrfsFile {
         // parent.childLengths[indexInParent -1] = Arrays.stream(leftSibling.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(leftSibling.childLengths).sum();
         parent.childLengths[indexInParent] += target.keys[0].length() + leftChildLength;
         parent.childLengths[indexInParent - 1] -= parent.keys[indexInParent - 1].length() + leftChildLength;
+        // fix index in target node to account for the shift that happened
+        indexedNode.index++;
     }
 
     /**

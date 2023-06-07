@@ -752,8 +752,35 @@ public class BtrfsFile {
      * @param indexedNode the node to ensure the size of.
      */
     private void ensureSize(IndexedNodeLinkedList indexedNode) {
-
-        throw new UnsupportedOperationException("Not implemented yet"); //TODO H3 c): remove if implemented
+        // the node
+        BtrfsNode node = indexedNode.node;
+        // do nothing if any of these criteria is met
+        if (node == this.root || node.size < degree) return;
+        // first, check for rotate methods
+        // start by keeping track of the parent node
+        BtrfsNode parent = indexedNode.parent.node;
+        // node index in parent
+        int indexInParent = indexedNode.parent.index;
+        // check for right rotation
+        if (indexInParent + 1 < parent.children.length && parent.children[indexInParent + 1] != null && parent.children[indexInParent + 1].size >= degree) rotateFromRightSibling(indexedNode);
+        // else, try left rotation
+        else if (indexInParent - 1 >= 0 && parent.children[indexInParent - 1] != null && parent.children[indexInParent - 1].size >= degree) rotateFromLeftSibling(indexedNode);
+        // if one of the rotations was possible, do a merge instead
+        else{ // otherwise merge with one of the siblings since they are both at the lowest possible size
+            // first, ensure that the parent is able to support the merge
+            ensureSize(indexedNode.parent);
+            // since things might have changed after the recursive call, reset local variables
+            parent = indexedNode.parent.node;
+            indexInParent = indexedNode.parent.index;
+            // attempt right merge if possible
+            if (indexInParent + 1 < parent.children.length && parent.children[indexInParent + 1] != null) mergeWithRightSibling(indexedNode);
+            // else do a left merge because this is now guaranteed to be possible
+            else mergeWithLeftSibling(indexedNode);
+            // deal with root being empty
+            if (root.size == 0){
+                root = indexedNode.node;
+            }
+        }
     }
 
     /**

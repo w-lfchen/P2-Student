@@ -763,8 +763,36 @@ public class BtrfsFile {
      * @param indexedNode the node to merge with its left sibling.
      */
     private void mergeWithLeftSibling(IndexedNodeLinkedList indexedNode) {
-
-        throw new UnsupportedOperationException("Not implemented yet"); //TODO H3 b): remove if implemented
+        // merge target
+        BtrfsNode target = indexedNode.node;
+        // parent
+        BtrfsNode parent = indexedNode.parent.node;
+        // target index in parent
+        int indexInParent = indexedNode.parent.index;
+        // left sibling
+        BtrfsNode leftSibling = parent.children[indexInParent - 1];
+        // shift everything in target in order to create space for the left sibling's entries and the parent key
+        System.arraycopy(target.keys, 0, target.keys, leftSibling.size +1, target.size);
+        System.arraycopy(target.children, 0, target.children, leftSibling.size +1, target.size +1);
+        System.arraycopy(target.childLengths, 0, target.childLengths, leftSibling.size +1, target.size +1);
+        // copy the key from parent
+        target.keys[leftSibling.size] = parent.keys[indexInParent -1];
+        // copy everything from the left sibling
+        System.arraycopy(leftSibling.keys, 0, target.keys, 0, leftSibling.size);
+        System.arraycopy(leftSibling.children, 0, target.children, 0, leftSibling.size +1);
+        System.arraycopy(leftSibling.childLengths, 0, target.childLengths, 0, leftSibling.size +1);
+        // adjust child length of target in parent
+        parent.childLengths[indexInParent] = Arrays.stream(target.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(target.childLengths).sum();
+        // shift everything in parent to account for the left sibling
+        System.arraycopy(parent.keys, indexInParent, parent.keys, indexInParent - 1, parent.size-indexInParent);
+        System.arraycopy(parent.children, indexInParent, parent.children, indexInParent - 1, parent.size-indexInParent +1);
+        System.arraycopy(parent.childLengths, indexInParent, parent.childLengths, indexInParent - 1, parent.size-indexInParent+1);
+        // adjust sizes
+        parent.size--;
+        target.size += leftSibling.size +1;
+        // adjust indices
+        indexedNode.parent.index--;
+        indexedNode.index+=leftSibling.size +1;
     }
 
     /**
@@ -800,7 +828,7 @@ public class BtrfsFile {
         // also adjust children and child lengths
         System.arraycopy(parent.children, indexInParent + 2, parent.children, indexInParent +1, parent.size-indexInParent +1);
         System.arraycopy(parent.childLengths, indexInParent + 2, parent.childLengths, indexInParent+1, parent.size-indexInParent+1);
-        //adjust sizes
+        // adjust sizes
         parent.size--;
         target.size += rightSibling.size;
     }

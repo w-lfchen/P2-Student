@@ -774,8 +774,35 @@ public class BtrfsFile {
      * @param indexedNode the node to merge with its right sibling.
      */
     private void mergeWithRightSibling(IndexedNodeLinkedList indexedNode) {
-
-        throw new UnsupportedOperationException("Not implemented yet"); //TODO H3 b): remove if implemented
+        // merge target
+        BtrfsNode target = indexedNode.node;
+        // parent
+        BtrfsNode parent = indexedNode.parent.node;
+        // target index in parent
+        int indexInParent = indexedNode.parent.index;
+        // right sibling
+        BtrfsNode rightSibling = parent.children[indexInParent + 1];
+        // copy parent key to target
+        target.keys[target.size] = parent.keys[indexInParent];
+        // adjust size
+        target.size++;
+        // copy right sibling's keys to target
+        System.arraycopy(rightSibling.keys, 0, target.keys, target.size, rightSibling.size);
+        // copy right sibling's children and their respective lengths to target
+        System.arraycopy(rightSibling.children, 0, target.children, target.size, rightSibling.size + 1);
+        System.arraycopy(rightSibling.childLengths, 0, target.childLengths, target.size, rightSibling.size + 1);
+        // fix the child length for target
+        // TODO: why does this work here??? there is something wrong in 3a for sure
+        parent.childLengths[indexInParent] = Arrays.stream(target.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(target.childLengths).sum();
+        // parent.childLengths[indexInParent] += parent.keys[indexInParent].length() + rightSibling.keys[0].length() + rightSibling.childLengths[0] + rightSibling.childLengths[1];
+        // move keys right of the index in parent to account for the removed key
+        System.arraycopy(parent.keys, indexInParent + 1, parent.keys, indexInParent, parent.size-indexInParent);
+        // also adjust children and child lengths
+        System.arraycopy(parent.children, indexInParent + 2, parent.children, indexInParent +1, parent.size-indexInParent +1);
+        System.arraycopy(parent.childLengths, indexInParent + 2, parent.childLengths, indexInParent+1, parent.size-indexInParent+1);
+        //adjust sizes
+        parent.size--;
+        target.size += rightSibling.size;
     }
 
     /**

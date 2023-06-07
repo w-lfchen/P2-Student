@@ -784,8 +784,38 @@ public class BtrfsFile {
      * @param indexedNode the node to rotate to.
      */
     private void rotateFromLeftSibling(IndexedNodeLinkedList indexedNode) {
-
-        throw new UnsupportedOperationException("Not implemented yet"); //TODO H3 a): remove if implemented
+        // rotation target
+        BtrfsNode target = indexedNode.node;
+        // parent
+        BtrfsNode parent = indexedNode.parent.node;
+        // target index in parent
+        int indexInParent = indexedNode.parent.index;
+        // left sibling
+        BtrfsNode leftSibling = parent.children[indexInParent - 1];
+        // save the rightmost element from the right sibling
+        Interval leftKey = leftSibling.keys[leftSibling.size-1];
+        // also save child and child length
+        BtrfsNode leftChild = leftSibling.children[leftSibling.size];
+        int leftChildLength = leftSibling.childLengths[leftSibling.size];
+        // shift target's arrays to create room for the new values
+        System.arraycopy(target.keys, 0, target.keys, 1, target.size);
+        System.arraycopy(target.children, 0, target.children, 1, target.size + 1);
+        System.arraycopy(target.childLengths, 0, target.childLengths, 1, target.size + 1);
+        // add key in parent node to target
+        target.keys[0] = parent.keys[indexInParent - 1];
+        // add child and child length
+        target.children[0] = leftChild;
+        target.childLengths[0] = leftChildLength;
+        // replace key in parent node with key from right sibling
+        parent.keys[indexInParent - 1] = leftKey;
+        // fix sizes
+        target.size++;
+        leftSibling.size--;
+        // adjust child lengths
+        // parent.childLengths[indexInParent] = Arrays.stream(target.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(target.childLengths).sum();
+        // parent.childLengths[indexInParent -1] = Arrays.stream(leftSibling.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(leftSibling.childLengths).sum();
+        parent.childLengths[indexInParent] += target.keys[0].length() + leftChildLength;
+        parent.childLengths[indexInParent - 1] -= parent.keys[indexInParent - 1].length() + leftChildLength;
     }
 
     /**

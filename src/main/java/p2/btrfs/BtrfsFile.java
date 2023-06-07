@@ -794,12 +794,39 @@ public class BtrfsFile {
      * @param indexedNode the node to rotate to.
      */
     private void rotateFromRightSibling(IndexedNodeLinkedList indexedNode) {
+        // rotation target
+        BtrfsNode target = indexedNode.node;
+        // parent
+        BtrfsNode parent = indexedNode.parent.node;
+        // target index in parent
+        int indexInParent = indexedNode.parent.index;
+        // right sibling
+        BtrfsNode rightSibling = parent.children[indexInParent + 1];
         // save the leftmost element from the right sibling
-        // shift right sibling's keys to fill the gap
-        // add key in parent node to left sibling
+        Interval rightKey = rightSibling.keys[0];
+        // also save child and child length
+        BtrfsNode rightChild = rightSibling.children[0];
+        int rightChildLength = rightSibling.childLengths[0];
+        // shift right sibling's arrays to fill the gap
+        System.arraycopy(rightSibling.keys, 1, rightSibling.keys, 0, rightSibling.size - 1);
+        System.arraycopy(rightSibling.children, 1, rightSibling.children, 0, rightSibling.size);
+        System.arraycopy(rightSibling.childLengths, 1, rightSibling.childLengths, 0, rightSibling.size);
+        // add key in parent node to target
+        target.keys[target.size] = parent.keys[indexInParent];
+        // add child and child length
+        target.children[target.size + 1] = rightChild;
+        target.childLengths[target.size + 1] = rightChildLength;
         // replace key in parent node with key from right sibling
+        parent.keys[indexInParent] = rightKey;
         // fix sizes
-        // TODO: figure out children
+        target.size++;
+        rightSibling.size--;
+        // adjust child lengths
+        // TODO: how is this wrong?? Could be a sign of a bigger issue!
+        // parent.childLengths[indexInParent] = Arrays.stream(target.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(target.childLengths).sum();
+        // parent.childLengths[indexInParent + 1] = Arrays.stream(rightSibling.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(rightSibling.childLengths).sum();
+        parent.childLengths[indexInParent] += target.keys[target.size - 1].length() + rightChildLength;
+        parent.childLengths[indexInParent + 1] -= parent.keys[indexInParent].length() + rightChildLength;
     }
 
     /**

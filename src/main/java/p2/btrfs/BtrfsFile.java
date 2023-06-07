@@ -755,7 +755,7 @@ public class BtrfsFile {
         // the node
         BtrfsNode node = indexedNode.node;
         // do nothing if any of these criteria is met
-        if (node == this.root || node.size < degree) return;
+        if (node == this.root || node.size >= degree) return;
         // first, check for rotate methods
         // start by keeping track of the parent node
         BtrfsNode parent = indexedNode.parent.node;

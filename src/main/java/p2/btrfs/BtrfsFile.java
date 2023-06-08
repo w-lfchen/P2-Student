@@ -432,7 +432,7 @@ public class BtrfsFile {
             // once the children of the new root have been set up, calculate their lengths and store them
             // newRoot.childLengths[0] = Arrays.stream(node.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(node.childLengths).sum();
             newRoot.childLengths[1] = Arrays.stream(rightNode.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(rightNode.childLengths).sum();
-            newRoot.childLengths[0] = this.size - newRoot.childLengths[1];
+            newRoot.childLengths[0] = this.size - (newRoot.childLengths[1] + + newRoot.keys[0].length());
             // now, fix the IndexedNodeList; start by adding a new node to reference the new root
             indexedNode.parent = new IndexedNodeLinkedList(null, newRoot, indexedNode.index < degree ? 0 : 1);
             // check whether the indexedNode needs to be adjusted
@@ -482,7 +482,7 @@ public class BtrfsFile {
         // as of 2c, this is deprecated and has been reworked
         // parent.childLengths[index] = Arrays.stream(node.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(node.childLengths).sum();
         parent.childLengths[index + 1] = Arrays.stream(rightNode.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(rightNode.childLengths).sum();
-        parent.childLengths[index] -= parent.childLengths[index + 1];
+        parent.childLengths[index] -= parent.childLengths[index + 1] + parent.keys[index].length();
         // check whether the indexedNode needs to be adjusted
         if (indexedNode.index >= degree) {
             indexedNode.node = rightNode;

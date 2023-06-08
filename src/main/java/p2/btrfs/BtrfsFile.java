@@ -765,7 +765,7 @@ public class BtrfsFile {
      * @param indexedNode the node to remove the rightmost key from.
      * @return the removed key.
      */
-    private Interval removeRightMostKey(IndexedNodeLinkedList indexedNode) {
+    private Interval removeRightMostKey(IndexedNodeLinkedList indexedNode) { // TODO: test
         // if the node is a leaf, no more recursion is needed
         if (indexedNode.node.isLeaf()){
             // keep the leaf legal
@@ -800,7 +800,7 @@ public class BtrfsFile {
      * @param indexedNode the node to remove the leftmost key from.
      * @return the removed key.
      */
-    private Interval removeLeftMostKey(IndexedNodeLinkedList indexedNode) {
+    private Interval removeLeftMostKey(IndexedNodeLinkedList indexedNode) { // TODO: test
         // if the node is a leaf, no more recursion is needed
         if (indexedNode.node.isLeaf()){
             // keep the leaf legal
@@ -837,7 +837,7 @@ public class BtrfsFile {
      *
      * @param indexedNode the node to ensure the size of.
      */
-    private void ensureSize(IndexedNodeLinkedList indexedNode) {
+    private void ensureSize(IndexedNodeLinkedList indexedNode) { // TODO: test
         // the node
         BtrfsNode node = indexedNode.node;
         // do nothing if any of these criteria is met
@@ -875,7 +875,7 @@ public class BtrfsFile {
      *
      * @param indexedNode the node to merge with its left sibling.
      */
-    private void mergeWithLeftSibling(IndexedNodeLinkedList indexedNode) {
+    private void mergeWithLeftSibling(IndexedNodeLinkedList indexedNode) { // TODO: test
         // merge target
         BtrfsNode target = indexedNode.node;
         // parent
@@ -914,7 +914,7 @@ public class BtrfsFile {
      *
      * @param indexedNode the node to merge with its right sibling.
      */
-    private void mergeWithRightSibling(IndexedNodeLinkedList indexedNode) {
+    private void mergeWithRightSibling(IndexedNodeLinkedList indexedNode) { // TODO: test
         // merge target
         BtrfsNode target = indexedNode.node;
         // parent
@@ -937,10 +937,10 @@ public class BtrfsFile {
         parent.childLengths[indexInParent] = Arrays.stream(target.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(target.childLengths).sum();
         // parent.childLengths[indexInParent] += parent.keys[indexInParent].length() + rightSibling.keys[0].length() + rightSibling.childLengths[0] + rightSibling.childLengths[1];
         // move keys right of the index in parent to account for the removed key
-        System.arraycopy(parent.keys, indexInParent + 1, parent.keys, indexInParent, parent.size-indexInParent);
+        System.arraycopy(parent.keys, indexInParent + 1, parent.keys, indexInParent, parent.size-(indexInParent+1));
         // also adjust children and child lengths
-        System.arraycopy(parent.children, indexInParent + 2, parent.children, indexInParent +1, parent.size-indexInParent +1);
-        System.arraycopy(parent.childLengths, indexInParent + 2, parent.childLengths, indexInParent+1, parent.size-indexInParent+1);
+        System.arraycopy(parent.children, indexInParent + 2, parent.children, indexInParent +1, parent.size-(indexInParent+1));
+        System.arraycopy(parent.childLengths, indexInParent + 2, parent.childLengths, indexInParent+1, parent.size-(indexInParent+1));
         // adjust sizes
         parent.size--;
         target.size += rightSibling.size;
@@ -951,7 +951,7 @@ public class BtrfsFile {
      *
      * @param indexedNode the node to rotate to.
      */
-    private void rotateFromLeftSibling(IndexedNodeLinkedList indexedNode) {
+    private void rotateFromLeftSibling(IndexedNodeLinkedList indexedNode) { // TODO: test
         // rotation target
         BtrfsNode target = indexedNode.node;
         // parent
@@ -993,7 +993,7 @@ public class BtrfsFile {
      *
      * @param indexedNode the node to rotate to.
      */
-    private void rotateFromRightSibling(IndexedNodeLinkedList indexedNode) {
+    private void rotateFromRightSibling(IndexedNodeLinkedList indexedNode) { // TODO: test
         // rotation target
         BtrfsNode target = indexedNode.node;
         // parent

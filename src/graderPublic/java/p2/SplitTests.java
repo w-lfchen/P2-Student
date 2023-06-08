@@ -166,7 +166,7 @@ public class SplitTests {
             .add("degree", degree)
             .add("parentIndex", parentIndex)
             .add("childIndex", childIndex)
-            .add("expectedGrandParentIndex", expectedParentIndex)
+            .add("expectedGrandParentIndex", expectedGrandParentIndex)
             .add("expectedParentIndex", expectedParentIndex)
             .add("expectedChildIndex", expectedChildIndex)
             .add("expected tree", treeToString(expected));

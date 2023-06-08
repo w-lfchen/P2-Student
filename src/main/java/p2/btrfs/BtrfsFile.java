@@ -740,7 +740,6 @@ public class BtrfsFile {
             // remove the interval from the node
             node.keys[node.size-1] = null;
             node.size--;
-            indexedNode.index = node.size - 1;
             // simply return the interval
             return theInterval;
         } else {
@@ -777,7 +776,6 @@ public class BtrfsFile {
             System.arraycopy(node.keys, 1, node.keys, 0, node.size-1);
             // decrease size
             node.size--;
-            indexedNode.index = node.size - 1;
             // simply return the interval
             return theInterval;
         } else {

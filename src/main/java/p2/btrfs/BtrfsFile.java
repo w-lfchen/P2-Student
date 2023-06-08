@@ -223,8 +223,34 @@ public class BtrfsFile {
      * @param remainingLength the remaining length of the data to insert.
      */
     private void insert(List<Interval> intervals, IndexedNodeLinkedList indexedLeaf, int remainingLength) {
-
-        throw new UnsupportedOperationException("Not implemented yet"); //TODO H2 c): remove if implemented
+        // node
+        BtrfsNode node = indexedLeaf.node;
+        // start by filling the current node as long as it is not full and there are intervals left
+        while (node.size < maxKeys && !intervals.isEmpty()){
+            // shift everything right of the current index
+            System.arraycopy(node.keys, indexedLeaf.index, node.keys, indexedLeaf.index + 1,  node.size - indexedLeaf.index);
+            // insert interval at index and remove it from the list
+            node.keys[indexedLeaf.index] = intervals.remove(0);
+            // remaining length is a bit special because it does not track the number of intervals, but their cumulative length
+            remainingLength -= node.keys[indexedLeaf.index].length();
+            // adjust values
+            indexedLeaf.index++;
+            node.size++;
+        }
+        // if there are no more intervals, exit
+        if (intervals.isEmpty()) return;
+        // if there are intervals left, start by splitting the current node
+        split(indexedLeaf);
+        // fix child lengths in parent
+        // if the node has not changed, there is no need to do anything
+        if (node != indexedLeaf.node){
+            // if the node has changed, the remaining length is still in the left node, so move it to the current one
+            BtrfsNode parent = indexedLeaf.parent.node;
+            parent.childLengths[indexedLeaf.parent.index - 1] -= remainingLength;
+            parent.childLengths[indexedLeaf.parent.index] += remainingLength;
+        }
+        // once the lengths are fixed, continue with a recursive call
+        insert(intervals, indexedLeaf, remainingLength);
     }
 
     /**

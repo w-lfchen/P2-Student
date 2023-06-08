@@ -117,69 +117,76 @@ public class BtrfsFile {
      * @param lengthRead       the amount of data that has been read so far.
      * @return a {@link StorageView} containing the data that was read.
      */
-    private StorageView read(int start, int length, BtrfsNode node, int cumulativeLength, int lengthRead) { // TODO: test, check for off-by-one errors!!
+    private StorageView read(int start, int length, BtrfsNode node, int cumulativeLength, int lengthRead) { // TODO: test
         // create the view to store the data in
         StorageView view = new EmptyStorageView(storage);
-        // find starting position
-        // if the method is called, the position must be in the given node
-        int index = 0; // index in the arrays
-        int logicalAddress; // logical address to be worked with
-        boolean childAdded = false; // whether the child at index has been added to cumulativeLength
-        // determine index
-        while (index < node.size) {
-            if (cumulativeLength + node.childLengths[index] < start + lengthRead) {
+        // index in the current node
+        int index = 0;
+        // whether the child node at the current index has been added to the cumulative length
+        boolean childAdded = false;
+        // find index
+        while (index < node.size){
+            if (cumulativeLength + node.childLengths[index] <= start + lengthRead){
                 cumulativeLength += node.childLengths[index];
                 childAdded = true;
             } else break;
-            if (cumulativeLength + node.keys[index].length() < start + lengthRead) {
+            if (cumulativeLength + node.keys[index].length() <= start + lengthRead) {
                 cumulativeLength += node.keys[index].length();
+                childAdded = false;
             } else break;
             index++;
-            childAdded = false;
         }
-        // now the index has been determined, it may also be size-1, where a further check for the last child needs to be implemented
-        logicalAddress = cumulativeLength; // first, add everything that has been skipped so far to the logical address
-        if (childAdded) {
-            // if the child at index has been added, the key needs to be read first, then continue from index+1
-            // determine difference in logical address and start
-            int diff = start + lengthRead - logicalAddress;
-            // extract key for easy handling
-            Interval key = node.keys[index];
-            // determine how much of the key should be read
-            int lengthToBeRead = Math.min(key.length() - diff, length);
-            // read the key and append to view
-            view = view.plus(storage.createView(new Interval(key.start() + diff, lengthToBeRead)));
-            // set variables for further stuff
-            logicalAddress = start + lengthToBeRead;
-            lengthRead += lengthToBeRead;
-            cumulativeLength += key.length();
-            index++;
-        } // index is now at a position where the child and then the key should be read, if some conditions are fulfilled
-        while (lengthRead < length && index < node.size) {
-            // read child at index
-            view = view.plus(read(start, length, node.children[index], cumulativeLength, lengthRead));
-            // adjust variables to keep track of what has been read
-            cumulativeLength += node.childLengths[index];
-            lengthRead += node.childLengths[index];
-            // read key if necessary
-            if (lengthRead < length) {
-                // determine difference in logical address and start
-                int diff = start + lengthRead - logicalAddress;
-                // extract key for easy handling
-                Interval key = node.keys[index];
-                // determine how much of the key should be read
-                int lengthToBeRead = Math.min(key.length() - diff, length);
-                // read the key and append to view
-                view = view.plus(storage.createView(new Interval(key.start() + diff, lengthToBeRead)));
-                // set variables for further stuff
-                logicalAddress = start + lengthToBeRead;
-                lengthRead += lengthToBeRead;
+        // the position to start reading from is now in the next object, this can be a child or a key
+        // deal with the current node being a leaf separately to make things simpler
+        if (node.isLeaf()){
+            // while inside the node and there is still stuff to be read
+            while (index < node.size && lengthRead < length) {
+                Interval nextInterval = node.keys[index];
+                // determine the position to start reading from in the next interval
+                int startPositionInInterval = start + lengthRead - cumulativeLength;
+                // determine the length to read in the next interval
+                int readingLength = Math.min(nextInterval.length() - startPositionInInterval, length - lengthRead);
+                // read the calculated length from the next interval
+                view = view.plus(storage.createView(new Interval(nextInterval.start() + startPositionInInterval, readingLength)));
+                // add the amount read to lengthRead
+                lengthRead += readingLength;
+                // don't forget to update the cumulative length
+                cumulativeLength += nextInterval.length();
+                // increase index because the key at index has been dealt with
                 index++;
             }
-        }
-        // read last child if needed
-        if (lengthRead < length) {
-            view = view.plus(read(start, length, node.children[index], cumulativeLength, lengthRead));
+            // if this loop is done, there is nothing left to do, so continue to the return statement
+        } else{
+            // children can be read through recursive calls, but only if they exist
+            while (index < node.size && lengthRead < length){
+                if (childAdded) {
+                    // if the child at the index has been added, the key now needs to be read
+                    Interval nextInterval = node.keys[index];
+                    // determine the position to start reading from in the next interval
+                    int startPositionInInterval = start + lengthRead - cumulativeLength;
+                    // determine the length to read in the next interval
+                    int readingLength = Math.min(nextInterval.length() - startPositionInInterval, length - lengthRead);
+                    // read the calculated length from the next interval
+                    view = view.plus(storage.createView(new Interval(nextInterval.start() + startPositionInInterval, readingLength)));
+                    // add the amount read to lengthRead
+                    lengthRead += readingLength;
+                    // don't forget to update the cumulative length
+                    cumulativeLength += nextInterval.length();
+                    // the second thing to read at a given index is the key, so only increase index here
+                    index++;
+                    // set childAdded
+                    childAdded = false;
+                } else {
+                    // if the child at index has not been added, get the  storage view  via recursive call
+                    StorageView viewOfChild = read(start, length, node.children[index], cumulativeLength, lengthRead);
+                    view = view.plus(viewOfChild);
+                    // now set the length read and cumulative length variables
+                    lengthRead += viewOfChild.length();
+                    cumulativeLength += viewOfChild.length();
+                    // set childAdded
+                    childAdded = true;
+                }
+            }
         }
         // once everything has been added, return the view
         return view;

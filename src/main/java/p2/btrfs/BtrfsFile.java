@@ -729,8 +729,30 @@ public class BtrfsFile {
      * @return the removed key.
      */
     private Interval removeRightMostKey(IndexedNodeLinkedList indexedNode) {
-
-        throw new UnsupportedOperationException("Not implemented yet"); //TODO H3 d): remove if implemented
+        // if the node is a leaf, no more recursion is needed
+        if (indexedNode.node.isLeaf()){
+            // the node
+            BtrfsNode node = indexedNode.node;
+            // save the rightmost interval
+            Interval theInterval = node.keys[node.size-1];
+            // remove the interval from the node
+            node.keys[node.size-1] = null;
+            node.size--;
+            indexedNode.index = node.size - 1;
+            // keep the leaf legal
+            ensureSize(indexedNode);
+            // simply return the interval
+            return theInterval;
+        } else {
+            // the node
+            BtrfsNode node = indexedNode.node;
+            // if the node is not a leaf, a recursive call is needed to obtain the interval, choose the rightmost index
+            Interval theInterval = removeRightMostKey(new IndexedNodeLinkedList(indexedNode, node.children[node.size],  0));
+            // adjust child length
+            node.childLengths[node.size] = Arrays.stream(node.children[node.size].keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(node.children[node.size].childLengths).sum();
+            // then simply return the node
+            return theInterval;
+        }
     }
 
     /**

@@ -291,7 +291,8 @@ public class BtrfsFile {
         BtrfsNode node = indexedNode.node;
         // keep track of the index in the node
         int index = indexedNode.index;
-        boolean nextIsChild = true; // whether the next object in the node is a child node or an interval
+        // track whether the next object in the node is a child node or an interval
+        boolean nextIsChild = true;
         // find index
         while (index < node.size) {
             if (cumulativeLength + node.childLengths[index] < start) {
@@ -305,7 +306,7 @@ public class BtrfsFile {
             } else break;
             index++;
         }
-        // fix index as it has now changed
+        // fix index in the indexed node as it has now changed
         indexedNode.index = index;
         // the loop has terminated, meaning that either index is equal to size, so the last child is where the position can be found
         // or the added value of the next object is bigger than start, therefore the index is in the next object
@@ -322,7 +323,6 @@ public class BtrfsFile {
                     // increase size to account for the inserted key
                     node.size++;
                 }
-                return indexedNode;
             } else {
                 // splitting is needed
                 // save original Interval
@@ -335,20 +335,19 @@ public class BtrfsFile {
                 // set up new intervals with the adjusted values
                 node.keys[index] = new Interval(leftInterval.start(), leftIntervalLength);
                 node.keys[index + 1] = new Interval(leftInterval.start() + leftIntervalLength, rightIntervalLength);
-                // return list, index + 1 is the insertion position
+                // return the list, index + 1 is the insertion position due to the split
                 indexedNode.index++;
                 // account for increased size
                 node.size++;
-                return indexedNode;
             }
+            // everything has been set, so return the current node as it is the one containing the insertion position
+            return indexedNode;
         }
         // if it is a child, just continue there and split if necessary, also covers the case where the position is right behind a key
         if (nextIsChild) {
-            // TODO: something is wrong around here
-            // it has to do with the splitting, maybe need to adjust some values afterwards
-            // split is being called, then the wrong node is entered
+            // if the node at the index is full, it needs to be split
             if (node.children[index].isFull()) {
-                // leftmost index for good measure
+                // leftmost index for good measure, it should not matter
                 split(new IndexedNodeLinkedList(indexedNode, node.children[index], 0));
                 // restore state and start over
                 indexedNode.index = startIndex;
@@ -356,9 +355,10 @@ public class BtrfsFile {
             }
             // adjust child length
             node.childLengths[index] += insertionSize;
+            // now that the child is not full, the insertion position can be looked for in it
             return findInsertionPosition(new IndexedNodeLinkedList(indexedNode, node.children[index], 0), start, cumulativeLength, insertionSize, splitKey);
         } else {
-            // if it is not child, it's a key that might need to be split
+            // if it is not a child, it's a key that might need to be split
             // if this is true, the position is right before the key
             if (cumulativeLength == start) {
                 // ensure that the rightmost position is chosen not only during potential splitting

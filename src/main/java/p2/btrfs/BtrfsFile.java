@@ -824,7 +824,7 @@ public class BtrfsFile {
             BtrfsNode node = indexedNode.node;
             // set index in future parent
             indexedNode.index = 0;
-            // if the node is not a leaf, a recursive call is needed to obtain the interval, choose the rightmost index
+            // if the node is not a leaf, a recursive call is needed to obtain the interval, choose the leftmost index
             Interval theInterval = removeLeftMostKey(new IndexedNodeLinkedList(indexedNode, node.children[0], 0));
             // adjust child length
             // the stream method does not work because the last key is not set to null
@@ -940,9 +940,8 @@ public class BtrfsFile {
         System.arraycopy(rightSibling.children, 0, target.children, target.size, rightSibling.size + 1);
         System.arraycopy(rightSibling.childLengths, 0, target.childLengths, target.size, rightSibling.size + 1);
         // fix the child length for target
-        // TODO: why does this work here??? there is something wrong in 3a for sure
+        // TODO: figure out whether the usage of streams might be an issue, in this method as well as in others
         parent.childLengths[indexInParent] = Arrays.stream(target.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(target.childLengths).sum();
-        // parent.childLengths[indexInParent] += parent.keys[indexInParent].length() + rightSibling.keys[0].length() + rightSibling.childLengths[0] + rightSibling.childLengths[1];
         // move keys right of the index in parent to account for the removed key
         System.arraycopy(parent.keys, indexInParent + 1, parent.keys, indexInParent, parent.size - (indexInParent + 1));
         // also adjust children and child lengths
@@ -983,12 +982,14 @@ public class BtrfsFile {
         target.childLengths[0] = leftChildLength;
         // replace key in parent node with key from right sibling
         parent.keys[indexInParent - 1] = leftKey;
+        // set last elements to null/0 in left sibling's arrays
+        leftSibling.keys[leftSibling.size - 1] = null;
+        leftSibling.children[leftSibling.size] = null;
+        leftSibling.childLengths[leftSibling.size] = 0;
         // fix sizes
         target.size++;
         leftSibling.size--;
         // adjust child lengths
-        // parent.childLengths[indexInParent] = Arrays.stream(target.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(target.childLengths).sum();
-        // parent.childLengths[indexInParent -1] = Arrays.stream(leftSibling.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(leftSibling.childLengths).sum();
         parent.childLengths[indexInParent] += target.keys[0].length() + leftChildLength;
         parent.childLengths[indexInParent - 1] -= parent.keys[indexInParent - 1].length() + leftChildLength;
         // fix index in target node to account for the shift that happened
@@ -1025,13 +1026,14 @@ public class BtrfsFile {
         target.childLengths[target.size + 1] = rightChildLength;
         // replace key in parent node with key from right sibling
         parent.keys[indexInParent] = rightKey;
+        // set last elements to null/0 in right sibling's arrays
+        rightSibling.keys[rightSibling.size - 1] = null;
+        rightSibling.children[rightSibling.size] = null;
+        rightSibling.childLengths[rightSibling.size] = 0;
         // fix sizes
         target.size++;
         rightSibling.size--;
         // adjust child lengths
-        // TODO: how is this wrong?? Could be a sign of a bigger issue!
-        // parent.childLengths[indexInParent] = Arrays.stream(target.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(target.childLengths).sum();
-        // parent.childLengths[indexInParent + 1] = Arrays.stream(rightSibling.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(rightSibling.childLengths).sum();
         parent.childLengths[indexInParent] += target.keys[target.size - 1].length() + rightChildLength;
         parent.childLengths[indexInParent + 1] -= parent.keys[indexInParent].length() + rightChildLength;
     }

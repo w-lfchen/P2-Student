@@ -187,6 +187,11 @@ public class BtrfsFile {
                     childAdded = true;
                 }
             }
+            // there might be a need to read the last child
+            if (lengthRead < length) {
+                // read last child, since integers are passed by value, there is no need to care about them anymore
+                view = view.plus(read(start, length, node.children[index], cumulativeLength, lengthRead));
+            }
         }
         // once everything has been added, return the view
         return view;

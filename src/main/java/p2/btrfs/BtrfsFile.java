@@ -215,7 +215,7 @@ public class BtrfsFile {
      * @param indexedLeaf     The node and index to insert at.
      * @param remainingLength the remaining length of the data to insert.
      */
-    private void insert(List<Interval> intervals, IndexedNodeLinkedList indexedLeaf, int remainingLength) {
+    private void insert(List<Interval> intervals, IndexedNodeLinkedList indexedLeaf, int remainingLength) { // TODO: test
         // node
         BtrfsNode node = indexedLeaf.node;
         // start by filling the current node as long as it is not full and there are intervals left
@@ -396,86 +396,64 @@ public class BtrfsFile {
     private void split(IndexedNodeLinkedList indexedNode) { // TODO: test
         // create node variable to operate on
         BtrfsNode node = indexedNode.node;
-        // if the node to be split is the root, special stuff needs to happen
-        if (node == this.root) { // split root if this is true
-            // create new root node
-            BtrfsNode newRoot = new BtrfsNode(this.degree);
-            // the old root will be the left node
-            BtrfsNode rightNode = new BtrfsNode(this.degree);
-            // set up newRoot, starting with the key
-            newRoot.keys[0] = node.keys[degree - 1];
-            newRoot.size = 1;
-            // the children
-            newRoot.children[0] = node;
-            newRoot.children[1] = rightNode;
-            // set up children; the values are this way because this method is only called when the array to be split is full
-            // fix children, their lengths and key arrays, start with the right node before modifying node since the values are taken from the left node
-            System.arraycopy(node.keys, degree, rightNode.keys, 0, degree - 1);
-            System.arraycopy(node.children, degree, rightNode.children, 0, degree);
-            System.arraycopy(node.childLengths, degree, rightNode.childLengths, 0, degree);
-            // maybe a bit hacky, but should work, the 2nd call is needed to restore the length by padding it; goal is to null all values that have been copied
-            node.keys = Arrays.copyOf(Arrays.copyOf(node.keys, degree - 1), 2 * degree - 1);
-            node.children = Arrays.copyOf(Arrays.copyOf(node.children, degree), 2 * degree);
-            node.childLengths = Arrays.copyOf(Arrays.copyOf(node.childLengths, degree), 2 * degree);
-            // fix children sizes
-            node.size = degree - 1;
-            rightNode.size = degree - 1;
-            // as of 2c, this is deprecated and has been reworked
-            // once the children of the new root have been set up, calculate their lengths and store them
-            // newRoot.childLengths[0] = Arrays.stream(node.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(node.childLengths).sum();
-            newRoot.childLengths[1] = Arrays.stream(rightNode.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(rightNode.childLengths).sum();
-            newRoot.childLengths[0] = this.size - (newRoot.childLengths[1] + newRoot.keys[0].length());
-            // now, fix the IndexedNodeList; start by adding a new node to reference the new root
-            indexedNode.parent = new IndexedNodeLinkedList(null, newRoot, indexedNode.index < degree ? 0 : 1);
-            // check whether the indexedNode needs to be adjusted
-            if (indexedNode.index >= degree) {
-                indexedNode.node = rightNode;
-                indexedNode.index -= degree;
-            }
-            // last of all, fix the root reference
-            this.root = newRoot;
-            return;
-        }
-        // before the splitting happens, the parent needs to be looked at; if the parent is full, split parent as well
-        if (indexedNode.parent.node.isFull()) {
-            // split the parent
-            split(indexedNode.parent);
-        }
-        // now the parent will be able to hold the node when it is split
-        BtrfsNode parent = indexedNode.parent.node;
         // new node for the right values
         BtrfsNode rightNode = new BtrfsNode(this.degree);
-        // extract index in parent node
-        int index = indexedNode.parent.index;
-        // insert middle key of node in parent at the correct position; start by making room for the new key
-        System.arraycopy(parent.keys, index, parent.keys, index + 1, parent.size - index);
+        // value will be assigned later based on whether the node being split is the root or not
+        BtrfsNode parent;
+        // the index of the left node (the one to split) in the parent node
+        int index = 0;
+        // whether the node to be split is the root
+        boolean rootSplit = node == this.root;
+        // set up the parent based on whether the root needs to be split or not
+        if (rootSplit) {
+            // create new root node
+            parent = new BtrfsNode(this.degree);
+            // account for new root in the IndexedNodeLinkedList
+            indexedNode.parent = new IndexedNodeLinkedList(null, parent, 0);
+            // fix the root reference
+            this.root = parent;
+            // set up the new root, its left child is the old root, and it contains 0 keys
+            parent.size = 0;
+            parent.children[index] = node;
+        } else {
+            // before the splitting happens, the parent needs to be looked at; if the parent is full, split parent as well
+            if (indexedNode.parent.node.isFull()) {
+                // split the parent, this might change things, so only assign the parent variable after the splitting
+                split(indexedNode.parent);
+            }
+            // now the parent will be able to hold the node when it is split
+            parent = indexedNode.parent.node;
+            // extract index in parent node
+            index = indexedNode.parent.index;
+            // insert middle key of node in parent at the correct position; start by making room for the new key
+            System.arraycopy(parent.keys, index, parent.keys, index + 1, parent.size - index);
+            // move children and their lengths
+            System.arraycopy(parent.children, index + 1, parent.children, index + 2, parent.size - index);
+            System.arraycopy(parent.childLengths, index + 1, parent.childLengths, index + 2, parent.size - index);
+        }
         // insert the key
         parent.keys[index] = node.keys[degree - 1];
-        // move children and their lengths
-        System.arraycopy(parent.children, index + 1, parent.children, index + 2, parent.size - index);
-        System.arraycopy(parent.childLengths, index + 1, parent.childLengths, index + 2, parent.size - index);
-        // set the new child node
+        // insert the right node
         parent.children[index + 1] = rightNode;
-        // new node has been inserted, increase size
+        // new stuff has been inserted, increase size
         parent.size++;
-        // set up children; the values are this way because this method is only called when the array to be split is full
-        // fix children, their lengths and key arrays, start with the right node before modifying node since the values are taken from the left node
+        // set up right child by giving it half of the values, the array is full if a node is split
         System.arraycopy(node.keys, degree, rightNode.keys, 0, degree - 1);
         System.arraycopy(node.children, degree, rightNode.children, 0, degree);
         System.arraycopy(node.childLengths, degree, rightNode.childLengths, 0, degree);
-        // maybe a bit hacky, but should work, the 2nd call is needed to restore the length by padding it; goal is to null all values that have been copied
+        // first, truncate the array the desired length, then pad it to its original length
         node.keys = Arrays.copyOf(Arrays.copyOf(node.keys, degree - 1), 2 * degree - 1);
         node.children = Arrays.copyOf(Arrays.copyOf(node.children, degree), 2 * degree);
         node.childLengths = Arrays.copyOf(Arrays.copyOf(node.childLengths, degree), 2 * degree);
-        // fix children sizes
+        // set the children's sizes
         node.size = degree - 1;
         rightNode.size = degree - 1;
-        // set the new values for the childLengths
-        // as of 2c, this is deprecated and has been reworked
-        // parent.childLengths[index] = Arrays.stream(node.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(node.childLengths).sum();
+        // calculate the length of the right node and set it accordingly in parent
         parent.childLengths[index + 1] = Arrays.stream(rightNode.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(rightNode.childLengths).sum();
-        parent.childLengths[index] -= parent.childLengths[index + 1] + parent.keys[index].length();
-        // check whether the indexedNode needs to be adjusted
+        // the length calculation at index varies depending on whether the node has been split or not
+        if (rootSplit) parent.childLengths[index] = this.size - (parent.childLengths[index + 1] + parent.keys[index].length());
+        else parent.childLengths[index] -= parent.childLengths[index + 1] + parent.keys[index].length();
+        // check whether the linked list needs to be adjusted
         if (indexedNode.index >= degree) {
             indexedNode.node = rightNode;
             indexedNode.index -= degree;

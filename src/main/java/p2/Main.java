@@ -58,31 +58,30 @@ public class Main {
 
         BtrfsFile file = fileSystem.createFile(fileName, "Helo", encoder);
 
-        //System.out.println(fileSystem.readFile(fileName, encoder)); // Helo!
+
+        System.out.println(fileSystem.readFile(fileName, encoder)); // Helo!
 
         fileSystem.insertIntoFile(fileName, 4, " World!", encoder);
 
-        //System.out.println(fileSystem.readFile(fileName, encoder)); // Helo World!
+        System.out.println(fileSystem.readFile(fileName, encoder)); // Helo World!
 
         fileSystem.insertIntoFile(fileName, 3, "l", encoder);
 
-        //System.out.println(fileSystem.readFile(fileName, encoder)); // Hello World!
+        System.out.println(fileSystem.readFile(fileName, encoder)); // Hello World!
 
         fileSystem.insertIntoFile(fileName, 6, "beautiful and very very very nice and wonderful and i dont know what else ", encoder);
 
-        //System.out.println(fileSystem.readFile(fileName, encoder, 0, file.getSize())); // Hello beautiful and very very very nice and wonderful and i dont know what else World!
+        System.out.println(fileSystem.readFile(fileName, encoder, 0, file.getSize())); // Hello beautiful and very very very nice and wonderful and i dont know what else World!
 
         System.out.println(new String(file.readAll().getData()));
 
         fileSystem.removeFromFile(fileName, 6, 14);
 
-        //System.out.println(fileSystem.readFile(fileName, encoder)); // Hello very very very nice and wonderful and i dont know what else World
+        System.out.println(fileSystem.readFile(fileName, encoder)); // Hello very very very nice and wonderful and i dont know what else World
 
         fileSystem.removeFromFile(fileName, 6, 60);
 
-        //System.out.println(fileSystem.readFile(fileName, encoder)); // Hello World!
-
-        // TODO: read does not pass all edge cases it seems, testing is needed
+        System.out.println(fileSystem.readFile(fileName, encoder)); // Hello World!
 
         final int length = file.readAll().getData().length;
 
@@ -100,6 +99,6 @@ public class Main {
 
         fileSystem.removeFromFile(fileName, 0, file.getSize());
 
-        //System.out.println(fileSystem.readFile(fileName, encoder)); // <empty>
+        System.out.println(fileSystem.readFile(fileName, encoder)); // <empty>
     }
 }

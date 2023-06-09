@@ -117,7 +117,7 @@ public class BtrfsFile {
      * @param lengthRead       the amount of data that has been read so far.
      * @return a {@link StorageView} containing the data that was read.
      */
-    private StorageView read(int start, int length, BtrfsNode node, int cumulativeLength, int lengthRead) { // TODO: test
+    private StorageView read(int start, int length, BtrfsNode node, int cumulativeLength, int lengthRead) {
         // create the view to store the data in
         StorageView view = new EmptyStorageView(storage);
         // index in the current node
@@ -215,7 +215,7 @@ public class BtrfsFile {
      * @param indexedLeaf     The node and index to insert at.
      * @param remainingLength the remaining length of the data to insert.
      */
-    private void insert(List<Interval> intervals, IndexedNodeLinkedList indexedLeaf, int remainingLength) { // TODO: test
+    private void insert(List<Interval> intervals, IndexedNodeLinkedList indexedLeaf, int remainingLength) {
         // node
         BtrfsNode node = indexedLeaf.node;
         // start by filling the current node as long as it is not full and there are intervals left
@@ -260,7 +260,7 @@ public class BtrfsFile {
      *                         If no split was necessary, this is null.
      * @return The leaf node and index, as well as the path to it, at which the intervals should be inserted.
      */
-    private IndexedNodeLinkedList findInsertionPosition(IndexedNodeLinkedList indexedNode, // TODO: test
+    private IndexedNodeLinkedList findInsertionPosition(IndexedNodeLinkedList indexedNode,
                                                         int start,
                                                         int cumulativeLength,
                                                         int insertionSize,
@@ -393,7 +393,7 @@ public class BtrfsFile {
      * @param indexedNode The path to the node to split, represented by a {@link IndexedNodeLinkedList}
      * @see IndexedNodeLinkedList
      */
-    private void split(IndexedNodeLinkedList indexedNode) { // TODO: test
+    private void split(IndexedNodeLinkedList indexedNode) {
         // create node variable to operate on
         BtrfsNode node = indexedNode.node;
         // new node for the right values
@@ -729,7 +729,7 @@ public class BtrfsFile {
      * @param indexedNode the node to remove the rightmost key from.
      * @return the removed key.
      */
-    private Interval removeRightMostKey(IndexedNodeLinkedList indexedNode) { // TODO: test
+    private Interval removeRightMostKey(IndexedNodeLinkedList indexedNode) {
         // if the node is a leaf, no more recursion is needed
         if (indexedNode.node.isLeaf()) {
             // keep the leaf legal
@@ -764,7 +764,7 @@ public class BtrfsFile {
      * @param indexedNode the node to remove the leftmost key from.
      * @return the removed key.
      */
-    private Interval removeLeftMostKey(IndexedNodeLinkedList indexedNode) { // TODO: test
+    private Interval removeLeftMostKey(IndexedNodeLinkedList indexedNode) {
         // if the node is a leaf, no more recursion is needed
         if (indexedNode.node.isLeaf()) {
             // keep the leaf legal
@@ -801,7 +801,7 @@ public class BtrfsFile {
      *
      * @param indexedNode the node to ensure the size of.
      */
-    private void ensureSize(IndexedNodeLinkedList indexedNode) { // TODO: test
+    private void ensureSize(IndexedNodeLinkedList indexedNode) {
         // the node
         BtrfsNode node = indexedNode.node;
         // do nothing if any of these criteria is met
@@ -842,7 +842,7 @@ public class BtrfsFile {
      *
      * @param indexedNode the node to merge with its left sibling.
      */
-    private void mergeWithLeftSibling(IndexedNodeLinkedList indexedNode) { // TODO: test
+    private void mergeWithLeftSibling(IndexedNodeLinkedList indexedNode) {
         // merge target
         BtrfsNode target = indexedNode.node;
         // parent
@@ -885,7 +885,7 @@ public class BtrfsFile {
      *
      * @param indexedNode the node to merge with its right sibling.
      */
-    private void mergeWithRightSibling(IndexedNodeLinkedList indexedNode) { // TODO: test
+    private void mergeWithRightSibling(IndexedNodeLinkedList indexedNode) {
         // merge target
         BtrfsNode target = indexedNode.node;
         // parent
@@ -904,7 +904,6 @@ public class BtrfsFile {
         System.arraycopy(rightSibling.children, 0, target.children, target.size, rightSibling.size + 1);
         System.arraycopy(rightSibling.childLengths, 0, target.childLengths, target.size, rightSibling.size + 1);
         // fix the child length for target
-        // TODO: figure out whether the usage of streams might be an issue, in this method as well as in others
         parent.childLengths[indexInParent] = Arrays.stream(target.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(target.childLengths).sum();
         // move keys right of the index in parent to account for the removed key
         System.arraycopy(parent.keys, indexInParent + 1, parent.keys, indexInParent, parent.size - (indexInParent + 1));
@@ -925,7 +924,7 @@ public class BtrfsFile {
      *
      * @param indexedNode the node to rotate to.
      */
-    private void rotateFromLeftSibling(IndexedNodeLinkedList indexedNode) { // TODO: test
+    private void rotateFromLeftSibling(IndexedNodeLinkedList indexedNode) {
         // rotation target
         BtrfsNode target = indexedNode.node;
         // parent
@@ -969,7 +968,7 @@ public class BtrfsFile {
      *
      * @param indexedNode the node to rotate to.
      */
-    private void rotateFromRightSibling(IndexedNodeLinkedList indexedNode) { // TODO: test
+    private void rotateFromRightSibling(IndexedNodeLinkedList indexedNode) {
         // rotation target
         BtrfsNode target = indexedNode.node;
         // parent

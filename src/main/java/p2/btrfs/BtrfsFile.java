@@ -137,10 +137,11 @@ public class BtrfsFile {
             index++;
         }
         // the position to start reading from is now in the next object, this can be a child or a key
-        // deal with the current node being a leaf separately to make things simpler
-        if (node.isLeaf()) {
-            // while inside the node and there is still stuff to be read
-            while (index < node.size && lengthRead < length) {
+        // while inside the node and there is still stuff to be read
+        while (index < node.size && lengthRead < length) {
+            // if the node is a leaf, skip the child reading step entirely
+            if (childAdded || node.isLeaf()) {
+                // if the child at the index has been added, the key now needs to be read
                 Interval nextInterval = node.keys[index];
                 // determine the position to start reading from in the next interval
                 int startPositionInInterval = start + lengthRead - cumulativeLength;
@@ -152,46 +153,26 @@ public class BtrfsFile {
                 lengthRead += readingLength;
                 // don't forget to update the cumulative length
                 cumulativeLength += nextInterval.length();
-                // increase index because the key at index has been dealt with
+                // the second thing to read at a given index is the key, so only increase index here
                 index++;
+                // set childAdded
+                childAdded = false;
+            } else {
+                // if the child at index has not been added, get the  storage view  via recursive call
+                StorageView viewOfChild = read(start, length, node.children[index], cumulativeLength, lengthRead);
+                view = view.plus(viewOfChild);
+                // now set the length read and cumulative length variables
+                lengthRead += viewOfChild.length();
+                cumulativeLength += viewOfChild.length();
+                // set childAdded
+                childAdded = true;
             }
-            // if this loop is done, there is nothing left to do, so continue to the return statement
-        } else {
-            // children can be read through recursive calls, but only if they exist
-            while (index < node.size && lengthRead < length) {
-                if (childAdded) {
-                    // if the child at the index has been added, the key now needs to be read
-                    Interval nextInterval = node.keys[index];
-                    // determine the position to start reading from in the next interval
-                    int startPositionInInterval = start + lengthRead - cumulativeLength;
-                    // determine the length to read in the next interval
-                    int readingLength = Math.min(nextInterval.length() - startPositionInInterval, length - lengthRead);
-                    // read the calculated length from the next interval
-                    view = view.plus(storage.createView(new Interval(nextInterval.start() + startPositionInInterval, readingLength)));
-                    // add the amount read to lengthRead
-                    lengthRead += readingLength;
-                    // don't forget to update the cumulative length
-                    cumulativeLength += nextInterval.length();
-                    // the second thing to read at a given index is the key, so only increase index here
-                    index++;
-                    // set childAdded
-                    childAdded = false;
-                } else {
-                    // if the child at index has not been added, get the  storage view  via recursive call
-                    StorageView viewOfChild = read(start, length, node.children[index], cumulativeLength, lengthRead);
-                    view = view.plus(viewOfChild);
-                    // now set the length read and cumulative length variables
-                    lengthRead += viewOfChild.length();
-                    cumulativeLength += viewOfChild.length();
-                    // set childAdded
-                    childAdded = true;
-                }
-            }
-            // there might be a need to read the last child
-            if (lengthRead < length) {
-                // read last child, since integers are passed by value, there is no need to care about them anymore
-                view = view.plus(read(start, length, node.children[index], cumulativeLength, lengthRead));
-            }
+        }
+        // there might be a need to read the last child, but only if the node is not a leaf
+        if (lengthRead < length && !node.isLeaf()) {
+            // read last child
+            view = view.plus(read(start, length, node.children[index], cumulativeLength, lengthRead));
+            // since integers are passed by value, there is no need to set the length read and the cumulative length anymore
         }
         // once everything has been added, return the view
         return view;

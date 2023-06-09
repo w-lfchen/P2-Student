@@ -82,6 +82,14 @@ public class Main {
 
         System.out.println(fileSystem.readFile(fileName, encoder)); // Hello World!
 
+        // TODO: read does not pass all edge cases it seems, testing is needed
+
+        final int length = file.readAll().getData().length;
+
+        for (int i = 0; i < length-1; ++i){
+            System.out.println(fileSystem.readFile(fileName, encoder, i, length-i));
+        }
+
         fileSystem.removeFromFile(fileName, 0, file.getSize());
 
         System.out.println(fileSystem.readFile(fileName, encoder)); // <empty>

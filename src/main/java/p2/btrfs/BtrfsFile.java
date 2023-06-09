@@ -163,7 +163,7 @@ public class BtrfsFile {
                 view = view.plus(viewOfChild);
                 // now set the length read and cumulative length variables
                 lengthRead += viewOfChild.length();
-                cumulativeLength += viewOfChild.length();
+                cumulativeLength += node.childLengths[index];
                 // set childAdded
                 childAdded = true;
             }

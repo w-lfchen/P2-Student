@@ -86,8 +86,15 @@ public class Main {
 
         final int length = file.readAll().getData().length;
 
-        for (int i = 0; i < length-1; ++i){
-            System.out.println(fileSystem.readFile(fileName, encoder, i, length-i));
+        for (int i = 0; i <= length; ++i){
+            System.out.println(fileSystem.readFile(fileName, encoder, 0, i));
+        }
+        for (int i = length; i >= 0; --i){
+            System.out.println(fileSystem.readFile(fileName, encoder, 0, i));
+        }
+
+        for (int i = 0; i <= length ;++i){
+            System.out.println(fileSystem.readFile(fileName, encoder, i, 2));
         }
 
         fileSystem.removeFromFile(fileName, 0, file.getSize());

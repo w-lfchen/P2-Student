@@ -451,7 +451,8 @@ public class BtrfsFile {
         // calculate the length of the right node and set it accordingly in parent
         parent.childLengths[index + 1] = Arrays.stream(rightNode.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(rightNode.childLengths).sum();
         // the length calculation at index varies depending on whether the node has been split or not
-        if (rootSplit) parent.childLengths[index] = this.size - (parent.childLengths[index + 1] + parent.keys[index].length());
+        if (rootSplit)
+            parent.childLengths[index] = this.size - (parent.childLengths[index + 1] + parent.keys[index].length());
         else parent.childLengths[index] -= parent.childLengths[index + 1] + parent.keys[index].length();
         // check whether the linked list needs to be adjusted
         if (indexedNode.index >= degree) {
@@ -872,6 +873,10 @@ public class BtrfsFile {
         // adjust indices
         indexedNode.parent.index--;
         indexedNode.index += leftSibling.size + 1;
+        // null everything in parent that is no longer needed
+        parent.keys = Arrays.copyOf(Arrays.copyOf(parent.keys, parent.size), 2 * degree - 1);
+        parent.children = Arrays.copyOf(Arrays.copyOf(parent.children, parent.size + 1), 2 * degree);
+        parent.childLengths = Arrays.copyOf(Arrays.copyOf(parent.childLengths, parent.size + 1), 2 * degree);
     }
 
     /**
@@ -909,6 +914,10 @@ public class BtrfsFile {
         // adjust sizes
         parent.size--;
         target.size += rightSibling.size;
+        // null everything in parent that is no longer needed
+        parent.keys = Arrays.copyOf(Arrays.copyOf(parent.keys, parent.size), 2 * degree - 1);
+        parent.children = Arrays.copyOf(Arrays.copyOf(parent.children, parent.size + 1), 2 * degree);
+        parent.childLengths = Arrays.copyOf(Arrays.copyOf(parent.childLengths, parent.size + 1), 2 * degree);
     }
 
     /**

@@ -862,7 +862,7 @@ public class BtrfsFile {
         System.arraycopy(leftSibling.children, 0, target.children, 0, leftSibling.size + 1);
         System.arraycopy(leftSibling.childLengths, 0, target.childLengths, 0, leftSibling.size + 1);
         // adjust child length of target in parent
-        parent.childLengths[indexInParent] = Arrays.stream(target.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(target.childLengths).sum();
+        parent.childLengths[indexInParent] += parent.childLengths[indexInParent - 1]+target.keys[leftSibling.size].length();
         // shift everything in parent to account for the left sibling
         System.arraycopy(parent.keys, indexInParent, parent.keys, indexInParent - 1, parent.size - indexInParent);
         System.arraycopy(parent.children, indexInParent, parent.children, indexInParent - 1, parent.size - indexInParent + 1);
@@ -904,7 +904,7 @@ public class BtrfsFile {
         System.arraycopy(rightSibling.children, 0, target.children, target.size, rightSibling.size + 1);
         System.arraycopy(rightSibling.childLengths, 0, target.childLengths, target.size, rightSibling.size + 1);
         // fix the child length for target
-        parent.childLengths[indexInParent] = Arrays.stream(target.keys).mapToInt(x -> x == null ? 0 : x.length()).sum() + Arrays.stream(target.childLengths).sum();
+        parent.childLengths[indexInParent] += parent.childLengths[indexInParent + 1]+target.keys[rightSibling.size].length();
         // move keys right of the index in parent to account for the removed key
         System.arraycopy(parent.keys, indexInParent + 1, parent.keys, indexInParent, parent.size - (indexInParent + 1));
         // also adjust children and child lengths
